@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
   }
 
   const PLANOS = [
-    { id: "monthly", name: "Mensal", price: 4990, interval: "month" as const },
-    { id: "annual", name: "Anual", price: 39900, interval: "year" as const },
+    { id: "monthly", name: "Mensal", price: 1990, interval: "month" as const },
+    { id: "annual", name: "Anual", price: 14900, interval: "year" as const },
   ];
 
   const plan = PLANOS.find((p) => p.id === plan_id);

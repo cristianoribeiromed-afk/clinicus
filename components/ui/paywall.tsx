@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Lock, Check, ArrowRight, Crown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Lock, Check, ArrowRight, Crown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PaywallProps {
   title?: string;
@@ -14,17 +14,17 @@ interface PaywallProps {
 }
 
 const defaultFeatures = [
-  'Acesso a todos os resumos',
-  'Simulados ilimitados com gabarito',
-  'Todos os casos clinicos comentados',
-  'Estatisticas avancadas de desempenho',
+  "Acesso a todos os resumos",
+  "Simulados ilimitados com gabarito",
+  "Todos os casos clínicos comentados",
+  "Estatisticas avancadas de desempenho",
 ];
 
 export function Paywall({
-  title = 'Conteudo Premium',
-  description = 'Este conteudo e exclusivo para assinantes Premium. Assine agora e tenha acesso completo a plataforma.',
+  title = "Conteudo Premium",
+  description = "Este conteudo e exclusivo para assinantes Premium. Assine agora e tenha acesso completo a plataforma.",
   features = defaultFeatures,
-  ctaText = 'Assinar Premium',
+  ctaText = "Assinar Premium",
   showOverlay = true,
 }: PaywallProps) {
   return (
@@ -37,8 +37,8 @@ export function Paywall({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          'relative z-20 p-8 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-primary/20',
-          showOverlay && 'absolute inset-0 m-auto h-fit max-w-md'
+          "relative z-20 p-8 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-primary/20",
+          showOverlay && "absolute inset-0 m-auto h-fit max-w-md",
         )}
       >
         <div className="text-center">
@@ -56,10 +56,7 @@ export function Paywall({
           {/* Features */}
           <ul className="space-y-3 mb-8 text-left">
             {features.map((feature, index) => (
-              <li
-                key={index}
-                className="flex items-start gap-3 text-sm"
-              >
+              <li key={index} className="flex items-start gap-3 text-sm">
                 <div className="mt-0.5 w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
                   <Check className="w-3 h-3 text-secondary" />
                 </div>
@@ -79,7 +76,7 @@ export function Paywall({
 
           {/* Link */}
           <p className="mt-4 text-xs text-muted-foreground">
-            Ja tem uma conta?{' '}
+            Ja tem uma conta?{" "}
             <Link href="/login" className="text-primary hover:underline">
               Faca login
             </Link>
@@ -106,7 +103,7 @@ export function PaywallPreview({
 
   return (
     <div className="relative">
-      <div className={blur ? 'blur-sm pointer-events-none select-none' : ''}>
+      <div className={blur ? "blur-sm pointer-events-none select-none" : ""}>
         {children}
       </div>
       <div className="absolute inset-0 z-10">
@@ -116,4 +113,4 @@ export function PaywallPreview({
   );
 }
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";

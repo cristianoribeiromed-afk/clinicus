@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Search, X, Filter, SortAsc } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { useState, useCallback } from "react";
+import { Search, X, Filter, SortAsc } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SearchBarProps {
   value: string;
@@ -22,9 +22,14 @@ interface SearchBarProps {
   className?: string;
 }
 
-export function SearchBar({ value, onChange, placeholder = 'Buscar...', className }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChange,
+  placeholder = "Buscar...",
+  className,
+}: SearchBarProps) {
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
       <Input
         type="text"
@@ -35,7 +40,7 @@ export function SearchBar({ value, onChange, placeholder = 'Buscar...', classNam
       />
       {value && (
         <button
-          onClick={() => onChange('')}
+          onClick={() => onChange("")}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="w-4 h-4" />
@@ -67,7 +72,9 @@ export function FilterSelect({
 }: FilterSelectProps) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={cn('w-full sm:w-[180px] bg-card border-border', className)}>
+      <SelectTrigger
+        className={cn("w-full sm:w-[180px] bg-card border-border", className)}
+      >
         <SelectValue placeholder={label} />
       </SelectTrigger>
       <SelectContent className="bg-card border-border">
@@ -88,7 +95,12 @@ interface FilterTabsProps {
   className?: string;
 }
 
-export function FilterTabs({ tabs, value, onChange, className }: FilterTabsProps) {
+export function FilterTabs({
+  tabs,
+  value,
+  onChange,
+  className,
+}: FilterTabsProps) {
   return (
     <Tabs value={value} onValueChange={onChange} className={className}>
       <TabsList className="bg-card border border-border">
@@ -111,9 +123,21 @@ interface FilterBarProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   filterOptions?: {
-    ciclo?: { value: string; onChange: (value: string) => void; options: FilterOption[] };
-    tipo?: { value: string; onChange: (value: string) => void; options: FilterOption[] };
-    sort?: { value: string; onChange: (value: string) => void; options: FilterOption[] };
+    ciclo?: {
+      value: string;
+      onChange: (value: string) => void;
+      options: FilterOption[];
+    };
+    tipo?: {
+      value: string;
+      onChange: (value: string) => void;
+      options: FilterOption[];
+    };
+    sort?: {
+      value: string;
+      onChange: (value: string) => void;
+      options: FilterOption[];
+    };
   };
   showSearch?: boolean;
   className?: string;
@@ -129,7 +153,7 @@ export function FilterBar({
   const [showFilters, setShowFilters] = useState(false);
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       <div className="flex flex-col sm:flex-row gap-3">
         {showSearch && (
           <SearchBar

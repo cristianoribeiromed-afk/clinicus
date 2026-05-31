@@ -1,17 +1,25 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Check, X, Clock, Target, TrendingUp, RotateCcw, Eye } from 'lucide-react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { motion } from "framer-motion";
+import {
+  Check,
+  X,
+  Clock,
+  Target,
+  TrendingUp,
+  RotateCcw,
+  Eye,
+} from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 interface ResultDisplayProps {
   acertos: number;
   total: number;
   tempoTotal: number;
-  questoes: {
+  Questões: {
     numero: number;
     acertou: boolean;
     respostaUsuario: number;
@@ -25,7 +33,7 @@ export function ResultDisplay({
   acertos,
   total,
   tempoTotal,
-  questoes,
+  Questões,
   onRefazer,
   onVerGabarito,
 }: ResultDisplayProps) {
@@ -35,10 +43,17 @@ export function ResultDisplay({
 
   // Performance level
   const getPerformanceLevel = () => {
-    if (percentage >= 90) return { label: 'Excelente', color: 'text-secondary', emoji: '🏆' };
-    if (percentage >= 70) return { label: 'Muito Bom', color: 'text-emerald-400', emoji: '🎉' };
-    if (percentage >= 50) return { label: 'Bom', color: 'text-blue-400', emoji: '👍' };
-    return { label: 'Continue Estudando', color: 'text-amber-400', emoji: '📚' };
+    if (percentage >= 90)
+      return { label: "Excelente", color: "text-secondary", emoji: "🏆" };
+    if (percentage >= 70)
+      return { label: "Muito Bom", color: "text-emerald-400", emoji: "🎉" };
+    if (percentage >= 50)
+      return { label: "Bom", color: "text-blue-400", emoji: "👍" };
+    return {
+      label: "Continue Estudando",
+      color: "text-amber-400",
+      emoji: "📚",
+    };
   };
 
   const performance = getPerformanceLevel();
@@ -59,7 +74,7 @@ export function ResultDisplay({
           <div className="text-5xl font-bold mb-2">
             <span className="text-gradient">{percentage}%</span>
           </div>
-          <p className={cn('text-lg font-medium', performance.color)}>
+          <p className={cn("text-lg font-medium", performance.color)}>
             {performance.label}
           </p>
         </div>
@@ -83,9 +98,9 @@ export function ResultDisplay({
               strokeWidth="12"
               fill="none"
               strokeLinecap="round"
-              initial={{ strokeDasharray: '0 553' }}
+              initial={{ strokeDasharray: "0 553" }}
               animate={{ strokeDasharray: `${(percentage / 100) * 553} 553` }}
-              transition={{ duration: 1.5, ease: 'easeOut' }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
             />
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -96,7 +111,7 @@ export function ResultDisplay({
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-4xl font-bold">{acertos}</span>
-            <span className="text-muted-foreground">de {total} questoes</span>
+            <span className="text-muted-foreground">de {total} Questões</span>
           </div>
         </div>
 
@@ -115,7 +130,7 @@ export function ResultDisplay({
           <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
             <Clock className="w-5 h-5 text-primary mx-auto mb-2" />
             <div className="text-2xl font-bold">
-              {tempoMinutos}:{tempoSegundos.toString().padStart(2, '0')}
+              {tempoMinutos}:{tempoSegundos.toString().padStart(2, "0")}
             </div>
             <div className="text-xs text-muted-foreground">Tempo</div>
           </div>
@@ -124,13 +139,20 @@ export function ResultDisplay({
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           {onRefazer && (
-            <Button onClick={onRefazer} variant="outline" className="flex-1 gap-2">
+            <Button
+              onClick={onRefazer}
+              variant="outline"
+              className="flex-1 gap-2"
+            >
               <RotateCcw className="w-4 h-4" />
               Refazer Simulado
             </Button>
           )}
           {onVerGabarito && (
-            <Button onClick={onVerGabarito} className="flex-1 gap-2 bg-primary hover:bg-primary/90">
+            <Button
+              onClick={onVerGabarito}
+              className="flex-1 gap-2 bg-primary hover:bg-primary/90"
+            >
               <Eye className="w-4 h-4" />
               Ver Gabarito Completo
             </Button>
@@ -145,14 +167,14 @@ export function ResultDisplay({
           Resumo por Questao
         </h3>
         <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-          {questoes.map((q) => (
+          {Questões.map((q) => (
             <div
               key={q.numero}
               className={cn(
-                'w-full aspect-square rounded-lg flex items-center justify-center text-sm font-semibold border',
+                "w-full aspect-square rounded-lg flex items-center justify-center text-sm font-semibold border",
                 q.acertou
-                  ? 'bg-secondary/20 border-secondary/30 text-secondary'
-                  : 'bg-red-500/20 border-red-500/30 text-red-400'
+                  ? "bg-secondary/20 border-secondary/30 text-secondary"
+                  : "bg-red-500/20 border-red-500/30 text-red-400",
               )}
             >
               {q.numero}

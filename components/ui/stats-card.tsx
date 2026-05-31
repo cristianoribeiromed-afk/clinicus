@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { motion, useInView } from 'framer-motion';
-import { useRef, useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { motion, useInView } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   value: number;
@@ -13,7 +13,15 @@ interface StatCardProps {
   className?: string;
 }
 
-function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; suffix?: string; prefix?: string }) {
+function AnimatedNumber({
+  value,
+  suffix = "",
+  prefix = "",
+}: {
+  value: number;
+  suffix?: string;
+  prefix?: string;
+}) {
   const [displayValue, setDisplayValue] = useState(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
@@ -41,20 +49,29 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
 
   return (
     <span ref={ref}>
-      {prefix}{displayValue.toLocaleString('pt-BR')}{suffix}
+      {prefix}
+      {displayValue.toLocaleString("pt-BR")}
+      {suffix}
     </span>
   );
 }
 
-export function StatCard({ value, suffix = '', prefix = '', label, icon, className }: StatCardProps) {
+export function StatCard({
+  value,
+  suffix = "",
+  prefix = "",
+  label,
+  icon,
+  className,
+}: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className={cn(
-        'bg-card rounded-xl border border-border p-6 text-center hover:border-primary/30 transition-all',
-        className
+        "bg-card rounded-xl border border-border p-6 text-center hover:border-primary/30 transition-all",
+        className,
       )}
     >
       {icon && (
@@ -73,36 +90,41 @@ export function ProgressBar({
   value,
   max = 100,
   showLabel = true,
-  size = 'default',
+  size = "default",
   className,
 }: {
   value: number;
   max?: number;
   showLabel?: boolean;
-  size?: 'sm' | 'default' | 'lg';
+  size?: "sm" | "default" | "lg";
   className?: string;
 }) {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
   const sizeClasses = {
-    sm: 'h-1',
-    default: 'h-2',
-    lg: 'h-3',
+    sm: "h-1",
+    default: "h-2",
+    lg: "h-3",
   };
 
   return (
-    <div className={cn('w-full', className)}>
+    <div className={cn("w-full", className)}>
       {showLabel && (
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
           <span>Progresso</span>
           <span>{percentage.toFixed(0)}%</span>
         </div>
       )}
-      <div className={cn('bg-muted rounded-full overflow-hidden', sizeClasses[size])}>
+      <div
+        className={cn(
+          "bg-muted rounded-full overflow-hidden",
+          sizeClasses[size],
+        )}
+      >
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
         />
       </div>
@@ -123,11 +145,11 @@ export function StreakIndicator({ days }: { days: number }) {
           transition={{
             duration: 1,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: "easeInOut",
           }}
           className="text-2xl"
         >
-          {days > 0 ? '🔥' : '⚡'}
+          {days > 0 ? "🔥" : "⚡"}
         </motion.div>
       </div>
       <div>

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Stethoscope, Instagram, Youtube, Linkedin } from 'lucide-react';
-import { APP_CONFIG } from '@/lib/config';
+import Link from "next/link";
+import { Stethoscope, Instagram, Youtube, Linkedin } from "lucide-react";
+import { APP_CONFIG } from "@/lib/config";
 
 export function Footer() {
   return (
@@ -15,11 +15,14 @@ export function Footer() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gradient">{APP_CONFIG.name}</span>
+              <span className="text-xl font-bold text-gradient">
+                {APP_CONFIG.name}
+              </span>
             </Link>
             <p className="text-muted-foreground text-sm max-w-md">
-              Plataforma completa de estudos para estudantes de medicina. Resumos organizados,
-              simulados com gabarito e casos clínicos comentados.
+              Plataforma completa de estudos para estudantes de medicina.
+              Resumos organizados, simulados com gabarito e casos clínicos
+              comentados.
             </p>
             <div className="flex gap-4 mt-6">
               <a
@@ -54,22 +57,34 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Produto</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/simulados" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/simulados"
+                  className="hover:text-foreground transition-colors"
+                >
                   Simulados
                 </Link>
               </li>
               <li>
-                <Link href="/resumos" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/resumos"
+                  className="hover:text-foreground transition-colors"
+                >
                   Resumos
                 </Link>
               </li>
               <li>
-                <Link href="/casos" className="hover:text-foreground transition-colors">
-                  Casos Clinicos
+                <Link
+                  href="/casos"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Casos clínicos
                 </Link>
               </li>
               <li>
-                <Link href="/planos" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/planos"
+                  className="hover:text-foreground transition-colors"
+                >
                   Planos
                 </Link>
               </li>
@@ -88,17 +103,26 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <Link href="/faq" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/faq"
+                  className="hover:text-foreground transition-colors"
+                >
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/termos" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/termos"
+                  className="hover:text-foreground transition-colors"
+                >
                   Termos de Uso
                 </Link>
               </li>
               <li>
-                <Link href="/privacidade" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/privacidade"
+                  className="hover:text-foreground transition-colors"
+                >
                   Privacidade
                 </Link>
               </li>
@@ -108,11 +132,10 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
           <p>
-            &copy; {new Date().getFullYear()} {APP_CONFIG.name}. Todos os direitos reservados.
+            &copy; {new Date().getFullYear()} {APP_CONFIG.name}. Todos os
+            direitos reservados.
           </p>
-          <p className="mt-2">
-            Desenvolvido por Cristiano Ribeiro da Silva
-          </p>
+          <p className="mt-2">Desenvolvido por Cristiano Ribeiro da Silva</p>
         </div>
       </div>
     </footer>

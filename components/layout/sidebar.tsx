@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Home,
   BookOpen,
@@ -16,28 +16,30 @@ import {
   Menu,
   X,
   Stethoscope,
-} from 'lucide-react';
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/lib/auth-store';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DISCIPLINAS, APP_CONFIG } from '@/lib/config';
+} from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/auth-store";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DISCIPLINAS, APP_CONFIG } from "@/lib/config";
 
 const menuItems = [
-  { icon: Home, label: 'Dashboard', href: '/dashboard' },
-  { icon: FileText, label: 'Resumos', href: '/resumos' },
-  { icon: Brain, label: 'Simulados', href: '/simulados' },
-  { icon: Heart, label: 'Casos Clinicos', href: '/casos' },
-  { icon: Star, label: 'Favoritos', href: '/favoritos' },
+  { icon: Home, label: "Dashboard", href: "/dashboard" },
+  { icon: FileText, label: "Resumos", href: "/resumos" },
+  { icon: Brain, label: "Simulados", href: "/simulados" },
+  { icon: Heart, label: "Casos clínicos", href: "/casos" },
+  { icon: Star, label: "Favoritos", href: "/favoritos" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { profile, isPremium } = useAuthStore();
-  const [expandedCiclo, setExpandedCiclo] = useState<'basico' | 'clinico' | null>(null);
+  const [expandedCiclo, setExpandedCiclo] = useState<
+    "básico" | "clínico" | null
+  >(null);
 
-  const disciplinasBasico = DISCIPLINAS.filter((d) => d.ciclo === 'basico');
-  const disciplinasClinico = DISCIPLINAS.filter((d) => d.ciclo === 'clinico');
+  const disciplinasbásico = DISCIPLINAS.filter((d) => d.ciclo === "básico");
+  const disciplinasclínico = DISCIPLINAS.filter((d) => d.ciclo === "clínico");
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen bg-background border-r border-border glass">
@@ -47,7 +49,9 @@ export function Sidebar() {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <Stethoscope className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-gradient">{APP_CONFIG.name}</span>
+          <span className="text-xl font-bold text-gradient">
+            {APP_CONFIG.name}
+          </span>
         </Link>
       </div>
 
@@ -69,7 +73,9 @@ export function Sidebar() {
                     <Crown className="w-3 h-3" /> Premium
                   </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Plano Free</span>
+                  <span className="text-xs text-muted-foreground">
+                    Plano Free
+                  </span>
                 )}
               </div>
             </div>
@@ -86,10 +92,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200',
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
                 isActive
-                  ? 'bg-primary/10 text-primary border border-primary/20'
-                  : 'text-muted-foreground hover:bg-card hover:text-foreground'
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:bg-card hover:text-foreground",
               )}
             >
               <item.icon className="w-5 h-5" />
@@ -101,35 +107,37 @@ export function Sidebar() {
         {/* Ciclo Básico */}
         <div className="pt-4">
           <button
-            onClick={() => setExpandedCiclo(expandedCiclo === 'basico' ? null : 'basico')}
+            onClick={() =>
+              setExpandedCiclo(expandedCiclo === "básico" ? null : "básico")
+            }
             className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
           >
             <span className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              Ciclo Basico
+              Ciclo básico
             </span>
             <ChevronDown
               className={cn(
-                'w-4 h-4 transition-transform',
-                expandedCiclo === 'basico' && 'rotate-180'
+                "w-4 h-4 transition-transform",
+                expandedCiclo === "básico" && "rotate-180",
               )}
             />
           </button>
-          {expandedCiclo === 'basico' && (
+          {expandedCiclo === "básico" && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: "auto", opacity: 1 }}
               className="mt-1 space-y-0.5 pl-2"
             >
-              {disciplinasBasico.slice(0, 6).map((disc) => (
+              {disciplinasbásico.slice(0, 6).map((disc) => (
                 <Link
                   key={disc.slug}
                   href={`/${disc.slug}`}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all',
+                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all",
                     pathname === `/${disc.slug}`
-                      ? 'bg-card text-foreground'
-                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
+                      ? "bg-card text-foreground"
+                      : "text-muted-foreground hover:bg-card hover:text-foreground",
                   )}
                 >
                   <div
@@ -146,35 +154,37 @@ export function Sidebar() {
         {/* Ciclo Clínico */}
         <div className="pt-2">
           <button
-            onClick={() => setExpandedCiclo(expandedCiclo === 'clinico' ? null : 'clinico')}
+            onClick={() =>
+              setExpandedCiclo(expandedCiclo === "clínico" ? null : "clínico")
+            }
             className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
           >
             <span className="flex items-center gap-2">
               <Stethoscope className="w-4 h-4" />
-              Ciclo Clinico
+              Ciclo clínico
             </span>
             <ChevronDown
               className={cn(
-                'w-4 h-4 transition-transform',
-                expandedCiclo === 'clinico' && 'rotate-180'
+                "w-4 h-4 transition-transform",
+                expandedCiclo === "clínico" && "rotate-180",
               )}
             />
           </button>
-          {expandedCiclo === 'clinico' && (
+          {expandedCiclo === "clínico" && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: "auto", opacity: 1 }}
               className="mt-1 space-y-0.5 pl-2"
             >
-              {disciplinasClinico.map((disc) => (
+              {disciplinasclínico.map((disc) => (
                 <Link
                   key={disc.slug}
                   href={`/${disc.slug}`}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all',
+                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all",
                     pathname === `/${disc.slug}`
-                      ? 'bg-card text-foreground'
-                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
+                      ? "bg-card text-foreground"
+                      : "text-muted-foreground hover:bg-card hover:text-foreground",
                   )}
                 >
                   <div
@@ -201,7 +211,7 @@ export function Sidebar() {
               <span className="font-semibold">Upgrade Premium</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Acesse todos os conteudos, simulados ilimitados e mais.
+              Acesse todos os conteúdos, simulados ilimitados e mais.
             </p>
           </Link>
         </div>
@@ -212,10 +222,10 @@ export function Sidebar() {
         <Link
           href="/perfil"
           className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
-            pathname === '/perfil'
-              ? 'bg-card text-foreground'
-              : 'text-muted-foreground hover:bg-card hover:text-foreground'
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
+            pathname === "/perfil"
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:bg-card hover:text-foreground",
           )}
         >
           <User className="w-5 h-5" />
@@ -262,10 +272,10 @@ export function MobileSidebar() {
             onClick={() => setIsOpen(false)}
           />
           <motion.div
-            initial={{ x: '100%' }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'tween' }}
+            exit={{ x: "100%" }}
+            transition={{ type: "tween" }}
             className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-72 bg-background border-l border-border"
           >
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -287,10 +297,10 @@ export function MobileSidebar() {
                     href={item.href}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
                       isActive
-                        ? 'bg-primary/10 text-primary border border-primary/20'
-                        : 'text-muted-foreground hover:bg-card hover:text-foreground'
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "text-muted-foreground hover:bg-card hover:text-foreground",
                     )}
                   >
                     <item.icon className="w-5 h-5" />
@@ -332,11 +342,11 @@ export function BottomNav() {
   const { isPremium } = useAuthStore();
 
   const navItems = [
-    { icon: Home, label: 'Home', href: '/dashboard' },
-    { icon: FileText, label: 'Resumos', href: '/resumos' },
-    { icon: Brain, label: 'Simulados', href: '/simulados' },
-    { icon: Heart, label: 'Casos', href: '/casos' },
-    { icon: User, label: 'Perfil', href: '/perfil' },
+    { icon: Home, label: "Home", href: "/dashboard" },
+    { icon: FileText, label: "Resumos", href: "/resumos" },
+    { icon: Brain, label: "Simulados", href: "/simulados" },
+    { icon: Heart, label: "Casos", href: "/casos" },
+    { icon: User, label: "Perfil", href: "/perfil" },
   ];
 
   return (
@@ -349,8 +359,8 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all",
+                isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
               <item.icon className="w-5 h-5" />

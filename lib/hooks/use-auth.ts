@@ -1,31 +1,35 @@
-'use client';
+"use client";
 
-import { useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/auth-store';
-import { supabase } from '@/lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import { useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/auth-store";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 export function useAuth(requireAuth = false) {
   const router = useRouter();
-  const { user, profile, isLoading, setUser, setProfile, setLoading, reset } = useAuthStore();
+  const { user, profile, isLoading, setUser, setProfile, setLoading, reset } =
+    useAuthStore();
 
   // Fetch user profile from database
-  const fetchProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+  const fetchProfile = useCallback(
+    async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle();
 
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setProfile(null);
-    }
-  }, [setProfile]);
+        if (error) throw error;
+        setProfile(data);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setProfile(null);
+      }
+    },
+    [setProfile],
+  );
 
   // Initialize auth state
   useEffect(() => {
@@ -46,7 +50,7 @@ export function useAuth(requireAuth = false) {
           }
         }
       } catch (error) {
-        console.error('Auth init error:', error);
+        console.error("Auth init error:", error);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -68,7 +72,7 @@ export function useAuth(requireAuth = false) {
         setProfile(null);
       }
 
-      if (event === 'SIGNED_OUT') {
+      if (event === "SIGNED_OUT") {
         reset();
       }
     });
@@ -82,21 +86,24 @@ export function useAuth(requireAuth = false) {
   // Redirect if auth required
   useEffect(() => {
     if (!isLoading && requireAuth && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [isLoading, requireAuth, user, router]);
 
   // Update last login
   const updateLastLogin = useCallback(async () => {
     if (!user) return;
-    await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+    await supabase
+      .from("users")
+      .update({ last_login: new Date().toISOString() })
+      .eq("id", user.id);
   }, [user]);
 
   // Sign out
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     reset();
-    router.push('/');
+    router.push("/");
   }, [reset, router]);
 
   return {
@@ -124,7 +131,7 @@ export function useRequirePremium() {
 
   useEffect(() => {
     if (!auth.isLoading && !isPremium) {
-      router.push('/planos');
+      router.push("/planos");
     }
   }, [auth.isLoading, isPremium, router]);
 

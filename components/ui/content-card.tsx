@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Clock, Star, Lock, Eye, FileText, Brain, Heart } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Content, ContentType } from '@/types';
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Clock, Star, Lock, Eye, FileText, Brain, Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Content, ContentType } from "@/types";
 
 interface ContentCardProps {
   content: Content;
@@ -16,19 +16,19 @@ interface ContentCardProps {
 const typeIcons: Record<ContentType, typeof Brain> = {
   resumo: FileText,
   simulado: Brain,
-  caso_clinico: Heart,
+  caso_clínico: Heart,
 };
 
 const typeLabels: Record<ContentType, string> = {
-  resumo: 'Resumo',
-  simulado: 'Simulado',
-  caso_clinico: 'Caso Clinico',
+  resumo: "Resumo",
+  simulado: "Simulado",
+  caso_clínico: "Caso clínico",
 };
 
 const typeColors: Record<ContentType, string> = {
-  resumo: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  simulado: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  caso_clinico: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+  resumo: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  simulado: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  caso_clínico: "bg-rose-500/20 text-rose-400 border-rose-500/30",
 };
 
 export function ContentCard({
@@ -41,14 +41,14 @@ export function ContentCard({
 
   const getHref = () => {
     switch (content.tipo) {
-      case 'resumo':
+      case "resumo":
         return `/resumos/${content.id}`;
-      case 'simulado':
+      case "simulado":
         return `/simulados/${content.id}`;
-      case 'caso_clinico':
+      case "caso_clínico":
         return `/casos/${content.id}`;
       default:
-        return '#';
+        return "#";
     }
   };
 
@@ -84,8 +84,10 @@ export function ContentCard({
           >
             <Star
               className={cn(
-                'w-4 h-4 transition-colors',
-                isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
+                "w-4 h-4 transition-colors",
+                isFavorite
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "text-muted-foreground",
               )}
             />
           </button>
@@ -93,12 +95,7 @@ export function ContentCard({
 
         {/* Thumbnail Area */}
         <div className="relative h-32 bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center">
-          <div
-            className={cn(
-              'p-4 rounded-2xl',
-              typeColors[content.tipo]
-            )}
-          >
+          <div className={cn("p-4 rounded-2xl", typeColors[content.tipo])}>
             <TypeIcon className="w-8 h-8" />
           </div>
 
@@ -112,14 +109,14 @@ export function ContentCard({
           <div className="flex items-center gap-2 mb-2">
             <span
               className={cn(
-                'text-xs px-2 py-0.5 rounded-full border',
-                typeColors[content.tipo]
+                "text-xs px-2 py-0.5 rounded-full border",
+                typeColors[content.tipo],
               )}
             >
               {typeLabels[content.tipo]}
             </span>
             <span className="text-xs text-muted-foreground capitalize">
-              {content.disciplina.replace('-', ' ')}
+              {content.disciplina.replace("-", " ")}
             </span>
           </div>
 
@@ -138,16 +135,26 @@ export function ContentCard({
           {/* Meta */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-3">
-              {content.questoes && content.questoes.length > 0 && (
+              {content.Questões && content.Questões.length > 0 && (
                 <span className="flex items-center gap-1">
                   <Brain className="w-3 h-3" />
-                  {Array.isArray(content.questoes) ? content.questoes.length : 0} questoes
+                  {Array.isArray(content.Questões)
+                    ? content.Questões.length
+                    : 0}{" "}
+                  Questões
                 </span>
               )}
               {content.tempo_por_questao && content.tempo_por_questao > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  {Math.round((content.tempo_por_questao * (Array.isArray(content.questoes) ? content.questoes.length : 0)) / 60)} min
+                  {Math.round(
+                    (content.tempo_por_questao *
+                      (Array.isArray(content.Questões)
+                        ? content.Questões.length
+                        : 0)) /
+                      60,
+                  )}{" "}
+                  min
                 </span>
               )}
             </div>

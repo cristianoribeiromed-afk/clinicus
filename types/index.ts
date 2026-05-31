@@ -1,5 +1,5 @@
 // User types
-export type PlanType = 'free' | 'monthly' | 'annual';
+export type PlanType = "free" | "monthly" | "annual";
 
 export interface User {
   id: string;
@@ -18,15 +18,15 @@ export interface User {
 }
 
 export interface DisciplineProgress {
-  questoes_respondidas: number;
+  Questões_respondidas: number;
   acertos: number;
   ultimo_acesso: string | null;
 }
 
 // Content types
-export type ContentType = 'resumo' | 'simulado' | 'caso_clinico';
-export type Difficulty = 'facil' | 'medio' | 'dificil';
-export type CycleType = 'basico' | 'clinico';
+export type ContentType = "resumo" | "simulado" | "caso_clínico";
+export type Difficulty = "facil" | "medio" | "dificil";
+export type CycleType = "básico" | "clínico";
 
 export interface Questao {
   id: string;
@@ -53,9 +53,9 @@ export interface Content {
   conteudo_html?: string;
   file_url?: string;
   // For simulados
-  questoes?: Questao[];
+  Questões?: Questao[];
   tempo_por_questao?: number;
-  // For casos clinicos
+  // For casos clínicos
   vinheta?: string;
   exames?: ExameItem[];
 }
@@ -79,8 +79,8 @@ export interface SimuladoResult {
 }
 
 // Payment types
-export type PaymentStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
-export type PaymentMethod = 'pix' | 'credit_card';
+export type PaymentStatus = "pending" | "approved" | "rejected" | "cancelled";
+export type PaymentMethod = "pix" | "credit_card";
 
 export interface Payment {
   id: string;
@@ -110,7 +110,7 @@ export interface PlanConfig {
   name: string;
   price: number;
   price_display: string;
-  interval: 'month' | 'year' | null;
+  interval: "month" | "year" | null;
   features: string[];
   highlighted?: boolean;
   discount?: string;

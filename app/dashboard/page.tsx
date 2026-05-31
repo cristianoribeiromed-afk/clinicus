@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   Brain,
   FileText,
@@ -14,19 +14,22 @@ import {
   BookOpen,
   ArrowRight,
   Crown,
-} from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { ContentCard, ContentCardSkeleton } from '@/components/ui/content-card';
-import { DisciplinaCard } from '@/components/ui/disciplina-card';
-import { ProgressBar, StreakIndicator } from '@/components/ui/stats-card';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { useContentList } from '@/lib/hooks/use-content';
-import { useAuthStore } from '@/lib/auth-store';
-import { DISCIPLINAS } from '@/lib/config';
-import { Button } from '@/components/ui/button';
-import type { Content } from '@/types';
+} from "lucide-react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { ContentCard, ContentCardSkeleton } from "@/components/ui/content-card";
+import { DisciplinaCard } from "@/components/ui/disciplina-card";
+import { ProgressBar, StreakIndicator } from "@/components/ui/stats-card";
+import { useAuth } from "@/lib/hooks/use-auth";
+import { useContentList } from "@/lib/hooks/use-content";
+import { useAuthStore } from "@/lib/auth-store";
+import { DISCIPLINAS } from "@/lib/config";
+import { Button } from "@/components/ui/button";
+import type { Content } from "@/types";
 
-const fadeInUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -35,13 +38,15 @@ const staggerContainer = {
 export default function DashboardPage() {
   const { user, profile, isLoading: authLoading } = useAuth(true);
   const { isPremium } = useAuthStore();
-  const { contents: recentContent, isLoading: contentLoading } = useContentList({ limit: 4 });
+  const { contents: recentContent, isLoading: contentLoading } = useContentList(
+    { limit: 4 },
+  );
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
+    if (hour < 12) return "Bom dia";
+    if (hour < 18) return "Boa tarde";
+    return "Boa noite";
   };
 
   if (authLoading) {
@@ -63,14 +68,21 @@ export default function DashboardPage() {
     <AppLayout>
       <div className="p-4 lg:p-8 space-y-8">
         {/* Header */}
-        <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="space-y-4">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          className="space-y-4"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold">
-                {getGreeting()}, {profile?.name.split(' ')[0]}!
+                {getGreeting()}, {profile?.name.split(" ")[0]}!
               </h1>
               <p className="text-muted-foreground">
-                {isPremium ? 'Acesso completo a todos os conteudos' : 'Continue sua jornada de estudos'}
+                {isPremium
+                  ? "Acesso completo a todos os conteúdos"
+                  : "Continue sua jornada de estudos"}
               </p>
             </div>
             {profile && <StreakIndicator days={profile.streak_days || 0} />}
@@ -89,8 +101,12 @@ export default function DashboardPage() {
                     <Crown className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Desbloqueie todo o conteudo</h3>
-                    <p className="text-sm text-muted-foreground">Acesso a todos os resumos, simulados e casos clinicos</p>
+                    <h3 className="font-semibold">
+                      Desbloqueie todo o conteudo
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Acesso a todos os resumos, simulados e casos clínicos
+                    </p>
                   </div>
                 </div>
                 <Link href="/planos">
@@ -105,19 +121,50 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Quick Stats */}
-        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        >
           {[
-            { icon: Brain, label: 'Simulados Feitos', value: profile?.simulados_completed?.length || 0, color: 'text-primary' },
-            { icon: FileText, label: 'Resumos Lidos', value: 0, color: 'text-secondary' },
-            { icon: Heart, label: 'Casos Estudados', value: 0, color: 'text-rose-400' },
-            { icon: Clock, label: 'Horas de Estudo', value: 0, color: 'text-amber-400' },
+            {
+              icon: Brain,
+              label: "Simulados Feitos",
+              value: profile?.simulados_completed?.length || 0,
+              color: "text-primary",
+            },
+            {
+              icon: FileText,
+              label: "Resumos Lidos",
+              value: 0,
+              color: "text-secondary",
+            },
+            {
+              icon: Heart,
+              label: "Casos Estudados",
+              value: 0,
+              color: "text-rose-400",
+            },
+            {
+              icon: Clock,
+              label: "Horas de Estudo",
+              value: 0,
+              color: "text-amber-400",
+            },
           ].map((stat, index) => (
-            <motion.div key={index} variants={fadeInUp} className="p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
+            <motion.div
+              key={index}
+              variants={fadeInUp}
+              className="p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
+            >
               <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-lg bg-card ${stat.color}`}>
                   <stat.icon className="w-4 h-4" />
                 </div>
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
+                <span className="text-xs text-muted-foreground">
+                  {stat.label}
+                </span>
               </div>
               <p className="text-2xl font-bold">{stat.value}</p>
             </motion.div>
@@ -125,13 +172,21 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Progress by Discipline */}
-        <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="space-y-4">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          className="space-y-4"
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
               Progresso por Disciplina
             </h2>
-            <Link href="/resumos" className="text-sm text-primary hover:underline">
+            <Link
+              href="/resumos"
+              className="text-sm text-primary hover:underline"
+            >
               Ver todas
             </Link>
           </div>
@@ -149,13 +204,21 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Recent Content */}
-        <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="space-y-4">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          className="space-y-4"
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary" />
-              Conteudos Recentes
+              conteúdos Recentes
             </h2>
-            <Link href="/resumos" className="text-sm text-primary hover:underline">
+            <Link
+              href="/resumos"
+              className="text-sm text-primary hover:underline"
+            >
               Ver todos
             </Link>
           </div>
@@ -171,10 +234,10 @@ export default function DashboardPage() {
                 <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="font-semibold mb-2">Nenhum conteudo ainda</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Explore nossos resumos, simulados e casos clinicos
+                  Explore nossos resumos, simulados e casos clínicos
                 </p>
                 <Link href="/resumos">
-                  <Button>Explorar Conteudos</Button>
+                  <Button>Explorar conteúdos</Button>
                 </Link>
               </div>
             )}
@@ -182,32 +245,58 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Recommended Section */}
-        <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="space-y-4">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          className="space-y-4"
+        >
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Flame className="w-5 h-5 text-primary" />
-            Recomendados para Voce
+            Recomendados para você
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/simulados" className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
+            <Link
+              href="/simulados"
+              className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
+            >
               <Brain className="w-8 h-8 text-primary mb-4" />
-              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">Simulados Interativos</h3>
-              <p className="text-sm text-muted-foreground mb-4">Teste seus conhecimentos com questoes comentadas</p>
+              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                Simulados Interativos
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Teste seus conhecimentos com Questões comentadas
+              </p>
               <div className="flex items-center gap-2 text-sm text-primary">
                 Iniciar <ArrowRight className="w-4 h-4" />
               </div>
             </Link>
-            <Link href="/casos" className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
+            <Link
+              href="/casos"
+              className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
+            >
               <Heart className="w-8 h-8 text-rose-400 mb-4" />
-              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">Casos Clinicos</h3>
-              <p className="text-sm text-muted-foreground mb-4">Aprimore seu raciocinio clinico</p>
+              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                Casos clínicos
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Aprimore seu raciocinio clínico
+              </p>
               <div className="flex items-center gap-2 text-sm text-primary">
                 Explorar <ArrowRight className="w-4 h-4" />
               </div>
             </Link>
-            <Link href="/resumos" className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
+            <Link
+              href="/resumos"
+              className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
+            >
               <FileText className="w-8 h-8 text-secondary mb-4" />
-              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">Biblioteca de Resumos</h3>
-              <p className="text-sm text-muted-foreground mb-4">Conteudos organizados por disciplina</p>
+              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                Biblioteca de Resumos
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                conteúdos organizados por disciplina
+              </p>
               <div className="flex items-center gap-2 text-sm text-primary">
                 Ler <ArrowRight className="w-4 h-4" />
               </div>

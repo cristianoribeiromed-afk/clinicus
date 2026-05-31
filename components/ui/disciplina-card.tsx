@@ -1,34 +1,32 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import * as Icons from 'lucide-react';
-import { BookOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { DisciplineConfig } from '@/types';
-import type { LucideIcon } from 'lucide-react';
+import Link from "next/link";
+import { motion } from "framer-motion";
+import * as Icons from "lucide-react";
+import { BookOpen } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { DisciplineConfig } from "@/types";
+import type { LucideIcon } from "lucide-react";
 
 interface DisciplinaCardProps {
   disciplina: DisciplineConfig;
   contentCount?: number;
   progress?: number;
-  variant?: 'landing' | 'dashboard';
+  variant?: "landing" | "dashboard";
 }
 
 export function DisciplinaCard({
   disciplina,
   contentCount = 0,
   progress = 0,
-  variant = 'landing',
+  variant = "landing",
 }: DisciplinaCardProps) {
-  const IconComponent = (Icons[disciplina.icon as keyof typeof Icons] || BookOpen) as LucideIcon;
+  const IconComponent = (Icons[disciplina.icon as keyof typeof Icons] ||
+    BookOpen) as LucideIcon;
 
-  if (variant === 'dashboard') {
+  if (variant === "dashboard") {
     return (
-      <Link
-        href={`/${disciplina.slug}`}
-        className="group block"
-      >
+      <Link href={`/${disciplina.slug}`} className="group block">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -40,11 +38,16 @@ export function DisciplinaCard({
               className="w-12 h-12 rounded-xl flex items-center justify-center"
               style={{ backgroundColor: `${disciplina.color}20` }}
             >
-              <IconComponent className="w-6 h-6" style={{ color: disciplina.color }} />
+              <IconComponent
+                className="w-6 h-6"
+                style={{ color: disciplina.color }}
+              />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold truncate">{disciplina.name}</h3>
-              <p className="text-xs text-muted-foreground">{contentCount} conteudos</p>
+              <p className="text-xs text-muted-foreground">
+                {contentCount} conteúdos
+              </p>
             </div>
           </div>
 
@@ -85,7 +88,10 @@ export function DisciplinaCard({
           className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
           style={{ backgroundColor: `${disciplina.color}20` }}
         >
-          <IconComponent className="w-7 h-7" style={{ color: disciplina.color }} />
+          <IconComponent
+            className="w-7 h-7"
+            style={{ color: disciplina.color }}
+          />
         </div>
 
         {/* Name */}
@@ -102,7 +108,7 @@ export function DisciplinaCard({
         {contentCount > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
-              {contentCount} conteudos
+              {contentCount} conteúdos
             </span>
             <span
               className="text-xs font-medium"

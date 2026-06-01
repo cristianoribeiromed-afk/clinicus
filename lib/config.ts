@@ -176,7 +176,7 @@ export const PLANOS: PlanConfig[] = [
   {
     id: "monthly",
     name: "Mensal",
-    price: 4990,
+    price: 1990,
     price_display: "R$ 19,90",
     interval: "month",
     features: [
@@ -191,7 +191,7 @@ export const PLANOS: PlanConfig[] = [
   {
     id: "annual",
     name: "Anual",
-    price: 39900,
+    price: 14900,
     price_display: "R$ 149,00",
     interval: "year",
     highlighted: true,

@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/lib/supabase";
-import type { User } from "@supabase/supabase-js";
 
 export function useAuth(requireAuth = false) {
   const router = useRouter();
   const { user, profile, isLoading, setUser, setProfile, setLoading, reset } =
     useAuthStore();
+  const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch user profile from database
   const fetchProfile = useCallback(
@@ -30,6 +30,36 @@ export function useAuth(requireAuth = false) {
     },
     [setProfile],
   );
+
+  // Registrar sessão no servidor após login
+  const registerSession = useCallback(async (userId: string) => {
+    try {
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId }),
+      });
+    } catch (error) {
+      console.error("Error registering session:", error);
+    }
+  }, []);
+
+  // Verificar se sessão ainda é válida
+  const checkSession = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/session");
+      const data = await res.json();
+
+      if (!data.valid && data.reason === "session_invalidated") {
+        // Sessão foi invalidada por outro login — fazer logout
+        await supabase.auth.signOut();
+        reset();
+        router.push("/login?reason=session_expired");
+      }
+    } catch (error) {
+      console.error("Session check error:", error);
+    }
+  }, [reset, router]);
 
   // Initialize auth state
   useEffect(() => {
@@ -68,12 +98,19 @@ export function useAuth(requireAuth = false) {
 
       if (session?.user) {
         await fetchProfile(session.user.id);
+
+        // Registrar nova sessão ao fazer login
+        if (event === "SIGNED_IN") {
+          await registerSession(session.user.id);
+        }
       } else {
         setProfile(null);
       }
 
       if (event === "SIGNED_OUT") {
         reset();
+        // Limpar cookie de sessão
+        await fetch("/api/auth/session", { method: "DELETE" });
       }
     });
 
@@ -81,7 +118,24 @@ export function useAuth(requireAuth = false) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [setUser, setProfile, setLoading, reset, fetchProfile]);
+  }, [setUser, setProfile, setLoading, reset, fetchProfile, registerSession]);
+
+  // Verificar sessão a cada 2 minutos quando logado
+  useEffect(() => {
+    if (user) {
+      sessionCheckInterval.current = setInterval(checkSession, 2 * 60 * 1000);
+    } else {
+      if (sessionCheckInterval.current) {
+        clearInterval(sessionCheckInterval.current);
+      }
+    }
+
+    return () => {
+      if (sessionCheckInterval.current) {
+        clearInterval(sessionCheckInterval.current);
+      }
+    };
+  }, [user, checkSession]);
 
   // Redirect if auth required
   useEffect(() => {
@@ -90,17 +144,9 @@ export function useAuth(requireAuth = false) {
     }
   }, [isLoading, requireAuth, user, router]);
 
-  // Update last login
-  const updateLastLogin = useCallback(async () => {
-    if (!user) return;
-    await supabase
-      .from("users")
-      .update({ last_login: new Date().toISOString() })
-      .eq("id", user.id);
-  }, [user]);
-
   // Sign out
   const signOut = useCallback(async () => {
+    await fetch("/api/auth/session", { method: "DELETE" });
     await supabase.auth.signOut();
     reset();
     router.push("/");
@@ -113,7 +159,6 @@ export function useAuth(requireAuth = false) {
     isAuthenticated: !!user,
     isPremium: useAuthStore.getState().isPremium,
     signOut,
-    updateLastLogin,
     fetchProfile,
   };
 }
@@ -127,7 +172,7 @@ export function useRequireAuth() {
 export function useRequirePremium() {
   const auth = useAuth(true);
   const router = useRouter();
-  const { isPremium, profile } = useAuthStore();
+  const { isPremium } = useAuthStore();
 
   useEffect(() => {
     if (!auth.isLoading && !isPremium) {

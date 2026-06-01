@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0A0A0F",
+        background: "#060B14",
         foreground: "#F1F5F9",
         card: {
           DEFAULT: "rgba(255,255,255,0.03)",

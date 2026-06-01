@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    --background: #0A0A0F;
+    --background: #060B14;
     --foreground: #F1F5F9;
-    --card: rgba(255,255,255,0.03);
+    --card: rgba(255,255,255,0.05);
     --card-foreground: #F1F5F9;
     --popover: rgba(255,255,255,0.05);
     --popover-foreground: #F1F5F9;
@@ -20,7 +20,7 @@
     --accent-foreground: #FFFFFF;
     --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
-    --border: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
     --input: rgba(255,255,255,0.05);
     --ring: #3B82F6;
     --radius: 0.75rem;

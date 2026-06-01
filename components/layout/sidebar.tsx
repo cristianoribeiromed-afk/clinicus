@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   Stethoscope,
+  Microscope,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const menuItems = [
   { icon: Brain, label: "Simulados", href: "/simulados" },
   { icon: Heart, label: "Casos clínicos", href: "/casos" },
   { icon: Star, label: "Favoritos", href: "/favoritos" },
+  { icon: Microscope, label: "Aulas Práticas", href: "/praticas" },
 ];
 
 export function Sidebar() {

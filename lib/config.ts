@@ -102,8 +102,8 @@ export const PLANOS: PlanConfig[] = [
   {
     id: "monthly",
     name: "Mensal",
-    price: 1990,
-    price_display: "R$ 19,90",
+    price: 2990,
+    price_display: "R$ 29,90",
     interval: "month",
     features: [
       "Todos os resumos",

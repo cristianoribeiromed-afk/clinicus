@@ -26,7 +26,7 @@ export interface DisciplineProgress {
 // Content types
 export type ContentType = "resumo" | "simulado" | "caso_clínico";
 export type Difficulty = "facil" | "medio" | "dificil";
-export type CycleType = "básico" | "clínico";
+export type CycleType = "básico" | "clínico" | "pré-clínico";
 
 export interface Questao {
   id: string;

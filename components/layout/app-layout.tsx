@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { Sidebar, MobileSidebar, BottomNav } from "./sidebar";
 import { DashboardHeader } from "./header";
+import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -27,6 +28,9 @@ export function AppLayout({ children, showSidebar = true }: AppLayoutProps) {
       </main>
 
       {showSidebar && <BottomNav />}
+      
+      {/* Botão WhatsApp flutuante */}
+      <WhatsAppButton />
     </div>
   );
 }
@@ -35,6 +39,8 @@ export function LandingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <main>{children}</main>
+      {/* Botão WhatsApp flutuante na landing */}
+      <WhatsAppButton />
     </div>
   );
 }

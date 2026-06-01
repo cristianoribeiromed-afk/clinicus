@@ -96,6 +96,7 @@ export interface Payment {
 
 // Discipline configuration
 export interface DisciplineConfig {
+  semestre?: number;
   slug: string;
   name: string;
   ciclo: CycleType;

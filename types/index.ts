@@ -6,6 +6,7 @@ export interface User {
   email: string;
   name: string;
   photo_url: string | null;
+  role: "aluno" | "admin";
   plan: PlanType;
   plan_expires_at: string | null;
   created_at: string;

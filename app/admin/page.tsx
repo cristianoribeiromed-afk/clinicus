@@ -280,7 +280,7 @@ function ContentForm({
           conteudo_html: initial.conteudo_html ?? '',
           file_url: initial.file_url ?? '',
           tempo_por_questao: initial.tempo_por_questao ?? 90,
-          questoes: (initial.questoes ?? []) as Questao[],
+        questoes: ((initial as any).Questões ?? (initial as any).questoes ?? []) as Questao[],
           vinheta: initial.vinheta ?? '',
         }
       : { ...EMPTY_FORM }

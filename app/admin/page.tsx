@@ -588,7 +588,7 @@ export default function AdminPage() {
 
   // Verificar se é admin
   useEffect(() => {
-    if (!isLoading && profile && (profile as unknown as { role: string }).role !== 'admin') {
+    if (!isLoading && profile && (profile as any)?.role !== 'admin') {
       router.push('/dashboard');
     }
   }, [isLoading, profile, router]);

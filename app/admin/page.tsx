@@ -81,7 +81,7 @@ const EMPTY_FORM: FormState = {
   tipo: 'resumo',
   titulo: '',
   disciplina: '',
-  ciclo: 'basico',
+  ciclo: 'básico',
   descricao: '',
   premium: true,
   tags: [],

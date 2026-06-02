@@ -401,8 +401,8 @@ function ContentForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="basico">Ciclo Básico</SelectItem>
-              <SelectItem value="clinico">Ciclo Clínico</SelectItem>
+              <SelectItem value="básico">Ciclo Básico</SelectItem>
+              <SelectItem value="clínico">Ciclo Clínico</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -72,7 +72,7 @@ interface FormState {
   file_url: string;
   // simulado
   tempo_por_questao: number;
-  questoes: Questao[];
+  Questões: Questao[];
   // caso clínico
   vinheta: string;
 }
@@ -88,7 +88,7 @@ const EMPTY_FORM: FormState = {
   conteudo_html: '',
   file_url: '',
   tempo_por_questao: 90,
-  questoes: [],
+  Questões: [],
   vinheta: '',
 };
 
@@ -280,7 +280,7 @@ function ContentForm({
           conteudo_html: initial.conteudo_html ?? '',
           file_url: initial.file_url ?? '',
           tempo_por_questao: initial.tempo_por_questao ?? 90,
-        questoes: ((initial as any).Questões ?? (initial as any).questoes ?? []) as Questao[],
+          Questões: (initial.Questões ?? []) as Questao[],
           vinheta: initial.vinheta ?? '',
         }
       : { ...EMPTY_FORM }
@@ -293,26 +293,26 @@ function ContentForm({
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const addQuestao = () =>
-    set('questoes', [
-      ...form.questoes,
+    set('Questões', [
+      ...form.Questões,
       { ...EMPTY_QUESTAO, id: crypto.randomUUID() },
     ]);
 
   const updateQuestao = (i: number, q: Questao) => {
-    const qs = [...form.questoes];
+    const qs = [...form.Questões];
     qs[i] = q;
-    set('questoes', qs);
+    set('Questões', qs);
   };
 
   const removeQuestao = (i: number) =>
-    set('questoes', form.questoes.filter((_, idx) => idx !== i));
+    set('Questões', form.Questões.filter((_, idx) => idx !== i));
 
   const save = async () => {
     if (!form.titulo || !form.disciplina || !form.descricao) {
       setToast({ type: 'error', message: 'Preencha título, disciplina e descrição.' });
       return;
     }
-    if (form.tipo === 'simulado' && form.questoes.length === 0) {
+    if (form.tipo === 'simulado' && form.Questões.length === 0) {
       setToast({ type: 'error', message: 'Adicione pelo menos uma questão.' });
       return;
     }
@@ -330,8 +330,8 @@ function ContentForm({
         conteudo_html: form.tipo === 'resumo' ? form.conteudo_html : null,
         file_url: form.tipo === 'resumo' ? form.file_url || null : null,
         tempo_por_questao: form.tipo === 'simulado' ? form.tempo_por_questao : null,
-        questoes: ['simulado', 'caso_clinico'].includes(form.tipo) ? form.questoes : [],
-        vinheta: form.tipo === 'caso_clinico' ? form.vinheta : null,
+        Questões: ['simulado', 'caso_clínico'].includes(form.tipo) ? form.Questões : [],
+        vinheta: form.tipo === 'caso_clínico' ? form.vinheta : null,
       };
 
       const { error } = initial
@@ -362,7 +362,7 @@ function ContentForm({
           {([
             { value: 'resumo', label: 'Resumo', icon: FileText },
             { value: 'simulado', label: 'Simulado', icon: Brain },
-            { value: 'caso_clinico', label: 'Caso Clínico', icon: Stethoscope },
+            { value: 'caso_clínico', label: 'Caso Clínico', icon: Stethoscope },
           ] as const).map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -497,19 +497,19 @@ function ContentForm({
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Questões ({form.questoes.length})</Label>
+              <Label>Questões ({form.Questões.length})</Label>
               <Button type="button" variant="outline" size="sm" onClick={addQuestao}>
                 <PlusCircle className="w-4 h-4 mr-1" /> Nova Questão
               </Button>
             </div>
 
-            {form.questoes.length === 0 && (
+            {form.Questões.length === 0 && (
               <div className="text-center py-8 border rounded-lg border-dashed text-muted-foreground text-sm">
                 Nenhuma questão ainda. Clique em "Nova Questão" para começar.
               </div>
             )}
 
-            {form.questoes.map((q, i) => (
+            {form.Questões.map((q, i) => (
               <QuestaoEditor
                 key={q.id || i}
                 questao={q}
@@ -523,7 +523,7 @@ function ContentForm({
       )}
 
       {/* ── Caso Clínico ── */}
-      {form.tipo === 'caso_clinico' && (
+      {form.tipo === 'caso_clínico' && (
         <div className="space-y-4">
           <div>
             <Label htmlFor="vinheta">Vinheta Clínica *</Label>
@@ -539,12 +539,12 @@ function ContentForm({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Questões do Caso ({form.questoes.length})</Label>
+              <Label>Questões do Caso ({form.Questões.length})</Label>
               <Button type="button" variant="outline" size="sm" onClick={addQuestao}>
                 <PlusCircle className="w-4 h-4 mr-1" /> Nova Questão
               </Button>
             </div>
-            {form.questoes.map((q, i) => (
+            {form.Questões.map((q, i) => (
               <QuestaoEditor
                 key={q.id || i}
                 questao={q}
@@ -636,20 +636,20 @@ export default function AdminPage() {
     total: contents.length,
     resumos: contents.filter((c) => c.tipo === 'resumo').length,
     simulados: contents.filter((c) => c.tipo === 'simulado').length,
-    casos: contents.filter((c) => c.tipo === 'caso_clinico').length,
+    casos: contents.filter((c) => c.tipo === 'caso_clínico').length,
     premium: contents.filter((c) => c.premium).length,
   };
 
   const tipoLabel: Record<string, string> = {
     resumo: 'Resumo',
     simulado: 'Simulado',
-    caso_clinico: 'Caso Clínico',
+    caso_clínico: 'Caso Clínico',
   };
 
   const tipoBadgeColor: Record<string, string> = {
     resumo: 'bg-blue-100 text-blue-700',
     simulado: 'bg-purple-100 text-purple-700',
-    caso_clinico: 'bg-emerald-100 text-emerald-700',
+    caso_clínico: 'bg-emerald-100 text-emerald-700',
   };
 
   if (isLoading) {
@@ -728,7 +728,7 @@ export default function AdminPage() {
               <SelectItem value="todos">Todos os tipos</SelectItem>
               <SelectItem value="resumo">Resumos</SelectItem>
               <SelectItem value="simulado">Simulados</SelectItem>
-              <SelectItem value="caso_clinico">Casos Clínicos</SelectItem>
+              <SelectItem value="caso_clínico">Casos Clínicos</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterDisciplina} onValueChange={setFilterDisciplina}>

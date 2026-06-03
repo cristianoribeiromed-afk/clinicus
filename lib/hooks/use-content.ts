@@ -20,7 +20,7 @@ export function useContentList(options: UseContentListOptions = {}) {
   const fetchContents = useCallback(async () => {
     try {
       setLoading(true);
-      let query = supabase.from("conteúdos").select("*");
+      let query = supabase.from("conteudos").select("*");
 
       if (options.tipo) {
         query = query.eq("tipo", options.tipo);
@@ -46,7 +46,7 @@ export function useContentList(options: UseContentListOptions = {}) {
       setContents(data || []);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao carregar conteúdos",
+        err instanceof Error ? err.message : "Erro ao carregar conteudos",
       );
     } finally {
       setLoading(false);
@@ -70,7 +70,7 @@ export function useContent(id: string) {
       try {
         setLoading(true);
         const { data, error: fetchError } = await supabase
-          .from("conteúdos")
+          .from("conteudos")
           .select("*")
           .eq("id", id)
           .maybeSingle();
@@ -81,13 +81,13 @@ export function useContent(id: string) {
         // Increment view count
         if (data) {
           await supabase
-            .from("conteúdos")
+            .from("conteudos")
             .update({ visualizacoes: data.visualizacoes + 1 })
             .eq("id", id);
         }
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Erro ao carregar conteúdo",
+          err instanceof Error ? err.message : "Erro ao carregar conteudo",
         );
       } finally {
         setLoading(false);

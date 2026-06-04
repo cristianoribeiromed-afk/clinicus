@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { supabase } from '@/lib/supabase';
 import { DISCIPLINAS } from '@/lib/config';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -95,38 +94,42 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[
   );
 }
 
-function QuestaoEditor({ questao, index, onChange, onRemove }: { questao: Questao; index: number; onChange: (q: Questao) => void; onRemove: () => void }) {
+function QuestaoEditor({ questao, index, onChange, onRemove }: {
+  questao: Questao; index: number; onChange: (q: Questao) => void; onRemove: () => void;
+}) {
   return (
     <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
       <div className="flex justify-between items-center">
         <span className="font-semibold text-sm">Questão {index + 1}</span>
-        <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
       </div>
       <div>
         <Label className="text-xs text-muted-foreground">Enunciado *</Label>
-        <Textarea value={questao.enunciado} onChange={(e) => onChange({ ...questao, enunciado: e.target.value })} placeholder="Digite o enunciado..." rows={3} className="mt-1" />
+        <Textarea value={questao.enunciado} onChange={(e) => onChange({ ...questao, enunciado: e.target.value })} rows={3} className="mt-1" />
       </div>
       <div>
         <Label className="text-xs text-muted-foreground">Alternativas</Label>
         {questao.alternativas.map((alt, i) => (
           <div key={i} className="flex items-center gap-2 mt-1">
             <button type="button" onClick={() => onChange({ ...questao, gabarito: i })}
-              className={`w-7 h-7 rounded-full border-2 text-xs font-bold flex items-center justify-center flex-shrink-0 transition-colors ${questao.gabarito === i ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-muted-foreground/40 text-muted-foreground'}`}>
+              className={`w-7 h-7 rounded-full border-2 text-xs font-bold flex items-center justify-center flex-shrink-0 ${questao.gabarito === i ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-muted-foreground/40'}`}>
               {String.fromCharCode(65 + i)}
             </button>
-            <Input value={alt} onChange={(e) => { const a = [...questao.alternativas]; a[i] = e.target.value; onChange({ ...questao, alternativas: a }); }} placeholder={`Alternativa ${String.fromCharCode(65 + i)}`} />
+            <Input value={alt} onChange={(e) => { const a = [...questao.alternativas]; a[i] = e.target.value; onChange({ ...questao, alternativas: a }); }} />
           </div>
         ))}
       </div>
       <div>
         <Label className="text-xs text-muted-foreground">Explicação *</Label>
-        <Textarea value={questao.explicacao} onChange={(e) => onChange({ ...questao, explicacao: e.target.value })} placeholder="Explique a resposta correta..." rows={2} className="mt-1" />
+        <Textarea value={questao.explicacao} onChange={(e) => onChange({ ...questao, explicacao: e.target.value })} rows={2} className="mt-1" />
       </div>
     </div>
   );
 }
 
-function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSuccess: () => void; onCancel: () => void }) {
+function ContentForm({ initial, onSuccess, onCancel }: {
+  initial?: Content; onSuccess: () => void; onCancel: () => void;
+}) {
   const [form, setForm] = useState<FormState>(
     initial ? {
       tipo: initial.tipo, titulo: initial.titulo, disciplina: initial.disciplina,
@@ -138,7 +141,6 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
   );
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
-
   const set = (key: keyof FormState, value: unknown) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const save = async () => {
@@ -158,17 +160,11 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
         questoes: ['simulado', 'caso_clínico'].includes(form.tipo) ? form.Questões : [],
         vinheta: form.tipo === 'caso_clínico' ? form.vinheta : null,
       };
-
       const url = initial ? `/api/admin/conteudos/${initial.id}` : '/api/admin/conteudos';
       const method = initial ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao salvar');
-
       setToast({ type: 'success', message: initial ? 'Atualizado!' : 'Criado com sucesso!' });
       setTimeout(onSuccess, 800);
     } catch (err: unknown) {
@@ -192,7 +188,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
             { value: 'caso_clínico', label: 'Caso Clínico', icon: Stethoscope },
           ] as const).map(({ value, label, icon: Icon }) => (
             <button key={value} type="button" onClick={() => set('tipo', value)}
-              className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all text-sm font-medium ${form.tipo === value ? 'border-primary bg-primary/10 text-primary' : 'border-muted hover:border-muted-foreground/40'}`}>
+              className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 text-sm font-medium ${form.tipo === value ? 'border-primary bg-primary/10 text-primary' : 'border-muted'}`}>
               <Icon className="w-5 h-5" />{label}
             </button>
           ))}
@@ -200,7 +196,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
       </div>
       <div>
         <Label>Título *</Label>
-        <Input value={form.titulo} onChange={(e) => set('titulo', e.target.value)} placeholder="Ex: Staphylococcus aureus" className="mt-1" />
+        <Input value={form.titulo} onChange={(e) => set('titulo', e.target.value)} className="mt-1" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -228,7 +224,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
       </div>
       <div>
         <Label>Descrição *</Label>
-        <Textarea value={form.descricao} onChange={(e) => set('descricao', e.target.value)} placeholder="Breve descrição..." rows={2} className="mt-1" />
+        <Textarea value={form.descricao} onChange={(e) => set('descricao', e.target.value)} rows={2} className="mt-1" />
       </div>
       <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
         <Crown className="w-4 h-4 text-amber-500" />
@@ -246,7 +242,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
         <div className="space-y-3">
           <div>
             <Label>Conteúdo HTML *</Label>
-            <Textarea value={form.conteudo_html} onChange={(e) => set('conteudo_html', e.target.value)} placeholder="Cole o HTML ou texto do resumo..." rows={12} className="mt-1 font-mono text-sm" />
+            <Textarea value={form.conteudo_html} onChange={(e) => set('conteudo_html', e.target.value)} rows={12} className="mt-1 font-mono text-sm" />
           </div>
           <div>
             <Label>URL do PDF (opcional)</Label>
@@ -258,16 +254,16 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
         <div className="space-y-4">
           <div>
             <Label>Tempo por questão (segundos)</Label>
-            <Input type="number" value={form.tempo_por_questao} onChange={(e) => set('tempo_por_questao', Number(e.target.value))} min={30} max={300} className="mt-1 w-40" />
+            <Input type="number" value={form.tempo_por_questao} onChange={(e) => set('tempo_por_questao', Number(e.target.value))} className="mt-1 w-40" />
           </div>
           <div className="flex items-center justify-between">
             <Label>Questões ({form.Questões.length})</Label>
-            <Button type="button" variant="outline" size="sm" onClick={() => set('Questões', [...form.Questões, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' }])}>
+            <Button type="button" variant="outline" size="sm" onClick={() => set('Questões', [...form.Questões, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' as Difficulty }])}>
               <PlusCircle className="w-4 h-4 mr-1" />Nova Questão
             </Button>
           </div>
           {form.Questões.map((q, i) => (
-            <QuestaoEditor key={q.id || i} questao={q} index={i}
+            <QuestaoEditor key={q.id} questao={q} index={i}
               onChange={(nq) => { const qs = [...form.Questões]; qs[i] = nq; set('Questões', qs); }}
               onRemove={() => set('Questões', form.Questões.filter((_, idx) => idx !== i))} />
           ))}
@@ -277,16 +273,16 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
         <div className="space-y-4">
           <div>
             <Label>Vinheta Clínica *</Label>
-            <Textarea value={form.vinheta} onChange={(e) => set('vinheta', e.target.value)} placeholder="Paciente, 45 anos..." rows={6} className="mt-1" />
+            <Textarea value={form.vinheta} onChange={(e) => set('vinheta', e.target.value)} rows={6} className="mt-1" />
           </div>
           <div className="flex items-center justify-between">
             <Label>Questões ({form.Questões.length})</Label>
-            <Button type="button" variant="outline" size="sm" onClick={() => set('Questões', [...form.Questões, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' }])}>
+            <Button type="button" variant="outline" size="sm" onClick={() => set('Questões', [...form.Questões, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' as Difficulty }])}>
               <PlusCircle className="w-4 h-4 mr-1" />Nova Questão
             </Button>
           </div>
           {form.Questões.map((q, i) => (
-            <QuestaoEditor key={q.id || i} questao={q} index={i}
+            <QuestaoEditor key={q.id} questao={q} index={i}
               onChange={(nq) => { const qs = [...form.Questões]; qs[i] = nq; set('Questões', qs); }}
               onRemove={() => set('Questões', form.Questões.filter((_, idx) => idx !== i))} />
           ))}
@@ -303,9 +299,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
 }
 
 export default function AdminPage() {
-const { user: currentUser, isLoading } = useAuth();
-
-
+  const { user: adminUser, isLoading } = useAuth();
   const router = useRouter();
   const [contents, setContents] = useState<Content[]>([]);
   const [loadingContent, setLoadingContent] = useState(true);
@@ -319,13 +313,13 @@ const { user: currentUser, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
- if (currentUser) {
+      if (adminUser) {
         setIsAdmin(true);
       } else {
         router.push('/login');
       }
     }
-}, [isLoading, currentUser, router]);
+  }, [isLoading, adminUser, router]);
 
   const fetchContents = useCallback(async () => {
     setLoadingContent(true);
@@ -334,7 +328,7 @@ const { user: currentUser, isLoading } = useAuth();
       const data = await res.json();
       if (Array.isArray(data)) setContents(data as Content[]);
     } catch (err) {
-      console.error('Erro fetchContents:', err);
+      console.error('Erro:', err);
     } finally {
       setLoadingContent(false);
     }
@@ -345,13 +339,13 @@ const { user: currentUser, isLoading } = useAuth();
   }, [isAdmin, fetchContents]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este conteúdo?')) return;
+    if (!confirm('Tem certeza?')) return;
     setDeletingId(id);
-    const res = await fetch(`/api/admin/conteudos/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/admin/conteudos?id=${id}`, { method: 'DELETE' });
     if (!res.ok) {
       setToast({ type: 'error', message: 'Erro ao excluir.' });
     } else {
-      setToast({ type: 'success', message: 'Excluído com sucesso.' });
+      setToast({ type: 'success', message: 'Excluído.' });
       setContents((prev) => prev.filter((c) => c.id !== id));
     }
     setDeletingId(null);
@@ -378,9 +372,7 @@ const { user: currentUser, isLoading } = useAuth();
   };
 
   const tipoLabel: Record<string, string> = {
-    resumo: 'Resumo',
-    simulado: 'Simulado',
-    'caso_clínico': 'Caso Clínico',
+    resumo: 'Resumo', simulado: 'Simulado', 'caso_clínico': 'Caso Clínico',
   };
 
   if (isLoading || isAdmin === null) {
@@ -406,7 +398,6 @@ const { user: currentUser, isLoading } = useAuth();
             <Plus className="w-4 h-4" />Novo Conteúdo
           </Button>
         </div>
-
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           {[
             { label: 'Total', value: stats.total, icon: BookOpen },
@@ -424,7 +415,6 @@ const { user: currentUser, isLoading } = useAuth();
             </div>
           ))}
         </div>
-
         <div className="flex flex-col sm:flex-row gap-3">
           <Input placeholder="Buscar por título..." value={search} onChange={(e) => setSearch(e.target.value)} className="sm:max-w-xs" />
           <Select value={filterTipo} onValueChange={setFilterTipo}>
@@ -442,7 +432,6 @@ const { user: currentUser, isLoading } = useAuth();
             </Button>
           )}
         </div>
-
         <div className="rounded-lg border overflow-hidden">
           {loadingContent ? (
             <div className="flex items-center justify-center py-16">
@@ -452,7 +441,7 @@ const { user: currentUser, isLoading } = useAuth();
             <div className="text-center py-16 text-muted-foreground">
               <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm">Nenhum conteúdo encontrado.</p>
-              <Button variant="link" onClick={() => { setEditing(undefined); setDialogOpen(true); }} className="mt-2">Criar o primeiro conteúdo</Button>
+              <Button variant="link" onClick={() => { setEditing(undefined); setDialogOpen(true); }}>Criar conteúdo</Button>
             </div>
           ) : (
             <Table>
@@ -483,7 +472,7 @@ const { user: currentUser, isLoading } = useAuth();
                         <Button variant="ghost" size="sm" onClick={() => { setEditing(c); setDialogOpen(true); }}>
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="text-red-500 hover:text-red-700">
                           {deletingId === c.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                         </Button>
                       </div>
@@ -496,7 +485,6 @@ const { user: currentUser, isLoading } = useAuth();
         </div>
         <p className="text-xs text-muted-foreground text-right">{filtered.length} de {contents.length} conteúdos</p>
       </div>
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

@@ -303,7 +303,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
 }
 
 export default function AdminPage() {
-  const { user, isLoading } = useAuth();
+const { user: currentUser, isLoading } = useAuth();
 
 
   const router = useRouter();
@@ -319,13 +319,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (user) {
+ if (currentUser) {
         setIsAdmin(true);
       } else {
         router.push('/login');
       }
     }
-  }, [isLoading, user, router]);
+}, [isLoading, currentUser, router]);
 
   const fetchContents = useCallback(async () => {
     setLoadingContent(true);

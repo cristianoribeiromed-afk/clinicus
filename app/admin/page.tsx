@@ -12,43 +12,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  FileText,
-  Brain,
-  Stethoscope,
-  Plus,
-  Pencil,
-  Trash2,
-  Crown,
-  BookOpen,
-  BarChart3,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  Tag,
-  PlusCircle,
+  FileText, Brain, Stethoscope, Plus, Pencil, Trash2, Crown,
+  BookOpen, BarChart3, X, CheckCircle2, AlertCircle, Loader2, Tag, PlusCircle,
 } from 'lucide-react';
 
 type Toast = { type: 'success' | 'error'; message: string } | null;
@@ -57,59 +32,27 @@ type CycleType = 'básico' | 'clínico' | 'pré-clínico';
 type Difficulty = 'facil' | 'medio' | 'dificil';
 
 interface Questao {
-  id: string;
-  enunciado: string;
-  alternativas: string[];
-  gabarito: number;
-  explicacao: string;
-  dificuldade: Difficulty;
+  id: string; enunciado: string; alternativas: string[];
+  gabarito: number; explicacao: string; dificuldade: Difficulty;
 }
 
 interface Content {
-  id: string;
-  tipo: ContentType;
-  titulo: string;
-  disciplina: string;
-  ciclo: CycleType;
-  descricao: string;
-  premium: boolean;
-  tags: string[];
-  created_at: string;
-  conteudo_html?: string;
-  file_url?: string;
-  Questões?: Questao[];
-  tempo_por_questao?: number;
-  vinheta?: string;
+  id: string; tipo: ContentType; titulo: string; disciplina: string;
+  ciclo: CycleType; descricao: string; premium: boolean; tags: string[];
+  created_at: string; conteudo_html?: string; file_url?: string;
+  Questões?: Questao[]; tempo_por_questao?: number; vinheta?: string;
 }
 
 interface FormState {
-  tipo: ContentType;
-  titulo: string;
-  disciplina: string;
-  ciclo: CycleType;
-  descricao: string;
-  premium: boolean;
-  tags: string[];
-  conteudo_html: string;
-  file_url: string;
-  tempo_por_questao: number;
-  Questões: Questao[];
-  vinheta: string;
+  tipo: ContentType; titulo: string; disciplina: string; ciclo: CycleType;
+  descricao: string; premium: boolean; tags: string[]; conteudo_html: string;
+  file_url: string; tempo_por_questao: number; Questões: Questao[]; vinheta: string;
 }
 
 const EMPTY_FORM: FormState = {
-  tipo: 'resumo',
-  titulo: '',
-  disciplina: '',
-  ciclo: 'básico',
-  descricao: '',
-  premium: true,
-  tags: [],
-  conteudo_html: '',
-  file_url: '',
-  tempo_por_questao: 90,
-  Questões: [],
-  vinheta: '',
+  tipo: 'resumo', titulo: '', disciplina: '', ciclo: 'básico',
+  descricao: '', premium: true, tags: [], conteudo_html: '',
+  file_url: '', tempo_por_questao: 90, Questões: [], vinheta: '',
 };
 
 function ToastMessage({ toast, onClose }: { toast: Toast; onClose: () => void }) {
@@ -164,7 +107,7 @@ function QuestaoEditor({ questao, index, onChange, onRemove }: { questao: Questa
         <Textarea value={questao.enunciado} onChange={(e) => onChange({ ...questao, enunciado: e.target.value })} placeholder="Digite o enunciado..." rows={3} className="mt-1" />
       </div>
       <div>
-        <Label className="text-xs text-muted-foreground">Alternativas (clique na letra para marcar o gabarito)</Label>
+        <Label className="text-xs text-muted-foreground">Alternativas</Label>
         {questao.alternativas.map((alt, i) => (
           <div key={i} className="flex items-center gap-2 mt-1">
             <button type="button" onClick={() => onChange({ ...questao, gabarito: i })}
@@ -175,25 +118,9 @@ function QuestaoEditor({ questao, index, onChange, onRemove }: { questao: Questa
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-xs text-muted-foreground">Dificuldade</Label>
-          <Select value={questao.dificuldade} onValueChange={(v) => onChange({ ...questao, dificuldade: v as Difficulty })}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="facil">Fácil</SelectItem>
-              <SelectItem value="medio">Médio</SelectItem>
-              <SelectItem value="dificil">Difícil</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-end pb-2">
-          <p className="text-sm text-muted-foreground">Gabarito: <strong className="text-foreground">{String.fromCharCode(65 + questao.gabarito)}</strong></p>
-        </div>
-      </div>
       <div>
-        <Label className="text-xs text-muted-foreground">Explicação do gabarito *</Label>
-        <Textarea value={questao.explicacao} onChange={(e) => onChange({ ...questao, explicacao: e.target.value })} placeholder="Explique por que esta é a resposta correta..." rows={2} className="mt-1" />
+        <Label className="text-xs text-muted-foreground">Explicação *</Label>
+        <Textarea value={questao.explicacao} onChange={(e) => onChange({ ...questao, explicacao: e.target.value })} placeholder="Explique a resposta correta..." rows={2} className="mt-1" />
       </div>
     </div>
   );
@@ -202,18 +129,11 @@ function QuestaoEditor({ questao, index, onChange, onRemove }: { questao: Questa
 function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSuccess: () => void; onCancel: () => void }) {
   const [form, setForm] = useState<FormState>(
     initial ? {
-      tipo: initial.tipo,
-      titulo: initial.titulo,
-      disciplina: initial.disciplina,
-      ciclo: initial.ciclo,
-      descricao: initial.descricao,
-      premium: initial.premium,
-      tags: initial.tags ?? [],
-      conteudo_html: initial.conteudo_html ?? '',
-      file_url: initial.file_url ?? '',
-      tempo_por_questao: initial.tempo_por_questao ?? 90,
-      Questões: (initial.Questões ?? []) as Questao[],
-      vinheta: initial.vinheta ?? '',
+      tipo: initial.tipo, titulo: initial.titulo, disciplina: initial.disciplina,
+      ciclo: initial.ciclo, descricao: initial.descricao, premium: initial.premium,
+      tags: initial.tags ?? [], conteudo_html: initial.conteudo_html ?? '',
+      file_url: initial.file_url ?? '', tempo_por_questao: initial.tempo_por_questao ?? 90,
+      Questões: (initial.Questões ?? []) as Questao[], vinheta: initial.vinheta ?? '',
     } : { ...EMPTY_FORM }
   );
   const [saving, setSaving] = useState(false);
@@ -229,12 +149,8 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
     setSaving(true);
     try {
       const payload = {
-        tipo: form.tipo,
-        titulo: form.titulo,
-        disciplina: form.disciplina,
-        ciclo: form.ciclo,
-        descricao: form.descricao,
-        premium: form.premium,
+        tipo: form.tipo, titulo: form.titulo, disciplina: form.disciplina,
+        ciclo: form.ciclo, descricao: form.descricao, premium: form.premium,
         tags: form.tags,
         conteudo_html: form.tipo === 'resumo' ? form.conteudo_html : null,
         file_url: form.tipo === 'resumo' ? form.file_url || null : null,
@@ -242,10 +158,17 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
         questoes: ['simulado', 'caso_clínico'].includes(form.tipo) ? form.Questões : [],
         vinheta: form.tipo === 'caso_clínico' ? form.vinheta : null,
       };
-      const { error } = initial
-        ? await supabase.from('conteudos').update(payload).eq('id', initial.id)
-        : await supabase.from('conteudos').insert(payload);
-      if (error) throw error;
+
+      const url = initial ? `/api/admin/conteudos/${initial.id}` : '/api/admin/conteudos';
+      const method = initial ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao salvar');
+
       setToast({ type: 'success', message: initial ? 'Atualizado!' : 'Criado com sucesso!' });
       setTimeout(onSuccess, 800);
     } catch (err: unknown) {
@@ -260,7 +183,6 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
   return (
     <div className="space-y-5">
       <ToastMessage toast={toast} onClose={() => setToast(null)} />
-
       <div>
         <Label className="text-sm font-semibold">Tipo *</Label>
         <div className="grid grid-cols-3 gap-3 mt-2">
@@ -276,12 +198,10 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
           ))}
         </div>
       </div>
-
       <div>
         <Label>Título *</Label>
         <Input value={form.titulo} onChange={(e) => set('titulo', e.target.value)} placeholder="Ex: Staphylococcus aureus" className="mt-1" />
       </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Ciclo *</Label>
@@ -306,12 +226,10 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
           </Select>
         </div>
       </div>
-
       <div>
         <Label>Descrição *</Label>
-        <Textarea value={form.descricao} onChange={(e) => set('descricao', e.target.value)} placeholder="Breve descrição do conteúdo..." rows={2} className="mt-1" />
+        <Textarea value={form.descricao} onChange={(e) => set('descricao', e.target.value)} placeholder="Breve descrição..." rows={2} className="mt-1" />
       </div>
-
       <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
         <Crown className="w-4 h-4 text-amber-500" />
         <div className="flex-1">
@@ -320,18 +238,15 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
         </div>
         <Switch checked={form.premium} onCheckedChange={(v) => set('premium', v)} />
       </div>
-
       <div>
         <Label>Tags</Label>
         <div className="mt-1"><TagInput tags={form.tags} onChange={(t) => set('tags', t)} /></div>
       </div>
-
       {form.tipo === 'resumo' && (
         <div className="space-y-3">
           <div>
-            <Label>Conteúdo *</Label>
-            <Textarea value={form.conteudo_html} onChange={(e) => set('conteudo_html', e.target.value)} placeholder="Cole aqui o conteúdo HTML ou texto do resumo..." rows={12} className="mt-1 font-mono text-sm" />
-            <p className="text-xs text-muted-foreground mt-1">Aceita HTML: &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;strong&gt; etc.</p>
+            <Label>Conteúdo HTML *</Label>
+            <Textarea value={form.conteudo_html} onChange={(e) => set('conteudo_html', e.target.value)} placeholder="Cole o HTML ou texto do resumo..." rows={12} className="mt-1 font-mono text-sm" />
           </div>
           <div>
             <Label>URL do PDF (opcional)</Label>
@@ -339,7 +254,6 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
           </div>
         </div>
       )}
-
       {form.tipo === 'simulado' && (
         <div className="space-y-4">
           <div>
@@ -352,9 +266,6 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
               <PlusCircle className="w-4 h-4 mr-1" />Nova Questão
             </Button>
           </div>
-          {form.Questões.length === 0 && (
-            <div className="text-center py-8 border rounded-lg border-dashed text-muted-foreground text-sm">Nenhuma questão ainda.</div>
-          )}
           {form.Questões.map((q, i) => (
             <QuestaoEditor key={q.id || i} questao={q} index={i}
               onChange={(nq) => { const qs = [...form.Questões]; qs[i] = nq; set('Questões', qs); }}
@@ -362,12 +273,11 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
           ))}
         </div>
       )}
-
       {form.tipo === 'caso_clínico' && (
         <div className="space-y-4">
           <div>
             <Label>Vinheta Clínica *</Label>
-            <Textarea value={form.vinheta} onChange={(e) => set('vinheta', e.target.value)} placeholder="Paciente, 45 anos, masculino, chega ao pronto-socorro com..." rows={6} className="mt-1" />
+            <Textarea value={form.vinheta} onChange={(e) => set('vinheta', e.target.value)} placeholder="Paciente, 45 anos..." rows={6} className="mt-1" />
           </div>
           <div className="flex items-center justify-between">
             <Label>Questões ({form.Questões.length})</Label>
@@ -382,7 +292,6 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
           ))}
         </div>
       )}
-
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancelar</Button>
         <Button onClick={save} disabled={saving}>
@@ -394,7 +303,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
 }
 
 export default function AdminPage() {
-  const { profile, isLoading } = useAuth(true);
+  const { user, isLoading } = useAuth(true);
   const router = useRouter();
   const [contents, setContents] = useState<Content[]>([]);
   const [loadingContent, setLoadingContent] = useState(true);
@@ -406,15 +315,15 @@ export default function AdminPage() {
   const [toast, setToast] = useState<Toast>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-useEffect(() => {
-  if (!isLoading) {
-    if (user) {
-      setIsAdmin(true);
-    } else {
-      router.push('/login');
+  useEffect(() => {
+    if (!isLoading) {
+      if (user) {
+        setIsAdmin(true);
+      } else {
+        router.push('/login');
+      }
     }
-  }
-}, [isLoading, user, router]);
+  }, [isLoading, user, router]);
 
   const fetchContents = useCallback(async () => {
     setLoadingContent(true);
@@ -423,24 +332,21 @@ useEffect(() => {
       const data = await res.json();
       if (Array.isArray(data)) setContents(data as Content[]);
     } catch (err) {
-      console.error(err);
+      console.error('Erro fetchContents:', err);
     } finally {
       setLoadingContent(false);
     }
   }, []);
 
-useEffect(() => {
-  if (isAdmin) {
-    console.log('Chamando fetchContents...');
-    fetchContents();
-  }
-}, [isAdmin, fetchContents]);
+  useEffect(() => {
+    if (isAdmin) fetchContents();
+  }, [isAdmin, fetchContents]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este conteúdo?')) return;
     setDeletingId(id);
-    const { error } = await supabase.from('conteudos').delete().eq('id', id);
-    if (error) {
+    const res = await fetch(`/api/admin/conteudos/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
       setToast({ type: 'error', message: 'Erro ao excluir.' });
     } else {
       setToast({ type: 'success', message: 'Excluído com sucesso.' });
@@ -485,13 +391,10 @@ useEffect(() => {
     );
   }
 
-  if (!isAdmin) return null;
-
   return (
     <AppLayout>
       <ToastMessage toast={toast} onClose={() => setToast(null)} />
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Painel Admin</h1>
@@ -589,7 +492,6 @@ useEffect(() => {
             </Table>
           )}
         </div>
-
         <p className="text-xs text-muted-foreground text-right">{filtered.length} de {contents.length} conteúdos</p>
       </div>
 

@@ -429,9 +429,12 @@ useEffect(() => {
     }
   }, []);
 
-  useEffect(() => {
-    if (isAdmin) fetchContents();
-  }, [isAdmin, fetchContents]);
+useEffect(() => {
+  if (isAdmin) {
+    console.log('Chamando fetchContents...');
+    fetchContents();
+  }
+}, [isAdmin, fetchContents]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este conteúdo?')) return;

@@ -409,13 +409,10 @@ export default function AdminPage() {
 useEffect(() => {
   if (!isLoading && user) {
     supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        console.log('DB role:', data?.role);
-        if (data?.role === 'admin') {
+      .rpc('get_my_role')
+      .then(({ data, error }) => {
+        console.log('Role via RPC:', data, error);
+        if (data === 'admin') {
           setIsAdmin(true);
         } else {
           setIsAdmin(false);

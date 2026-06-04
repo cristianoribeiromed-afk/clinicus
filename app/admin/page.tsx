@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { supabase } from '@/lib/supabase-server';
+import { supabase } from '@/lib/supabase';
 import { DISCIPLINAS } from '@/lib/config';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';

@@ -304,7 +304,7 @@ function ContentForm({ initial, onSuccess, onCancel }: { initial?: Content; onSu
 
 export default function AdminPage() {
   const { user, isLoading } = useAuth();
-  console.log('AdminPage renderizando');
+
 
   const router = useRouter();
   const [contents, setContents] = useState<Content[]>([]);

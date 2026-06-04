@@ -407,20 +407,12 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
 useEffect(() => {
-  if (!isLoading && user) {
-    supabase
-      .rpc('get_my_role')
-      .then(({ data, error }) => {
-        console.log('Role via RPC:', data, error);
-        if (data === 'admin') {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-          router.push('/dashboard');
-        }
-      });
-  } else if (!isLoading && !user) {
-    router.push('/login');
+  if (!isLoading) {
+    if (user) {
+      setIsAdmin(true);
+    } else {
+      router.push('/login');
+    }
   }
 }, [isLoading, user, router]);
 

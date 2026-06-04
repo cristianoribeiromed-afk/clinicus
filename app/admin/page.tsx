@@ -420,9 +420,15 @@ export default function AdminPage() {
 
   const fetchContents = useCallback(async () => {
     setLoadingContent(true);
-    const { data, error } = await supabase.from('conteudos').select('*').order('created_at', { ascending: false });
-    if (!error && data) setContents(data as Content[]);
-    setLoadingContent(false);
+    try {
+      const res = await fetch('/api/admin/conteudos');
+      const data = await res.json();
+      if (Array.isArray(data)) setContents(data as Content[]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingContent(false);
+    }
   }, []);
 
   useEffect(() => {

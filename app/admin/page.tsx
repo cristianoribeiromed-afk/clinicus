@@ -406,24 +406,26 @@ export default function AdminPage() {
   const [toast, setToast] = useState<Toast>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
- useEffect(() => {
-    if (!isLoading) {
-      const role = (profile as any)?.role;
-      console.log('Profile:', profile);
-      console.log('Role:', role);
-      if (role === 'admin') {
-        setIsAdmin(true);
-      } else if (profile !== null) {
-        setIsAdmin(false);
-        router.push('/dashboard');
-      } else {
-        // profile ainda null, aguarda
-        setTimeout(() => {
-          if (profile === null) router.push('/dashboard');
-        }, 3000);
-      }
-    }
-  }, [isLoading, profile, router]);
+useEffect(() => {
+  if (!isLoading && user) {
+    supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        console.log('DB role:', data?.role);
+        if (data?.role === 'admin') {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+          router.push('/dashboard');
+        }
+      });
+  } else if (!isLoading && !user) {
+    router.push('/login');
+  }
+}, [isLoading, user, router]);
 
   const fetchContents = useCallback(async () => {
     setLoadingContent(true);

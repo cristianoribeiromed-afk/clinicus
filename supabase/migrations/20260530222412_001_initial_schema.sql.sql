@@ -172,12 +172,11 @@ CREATE TRIGGER update_conteudos_updated_at
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, name, photo_url)
+  INSERT INTO public.users (id, email, name)
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    NEW.raw_user_meta_data->>'avatar_url'
+    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1))
   );
   RETURN NEW;
 END;

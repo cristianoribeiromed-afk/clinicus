@@ -29,7 +29,7 @@ import {
 
 type Toast = { type: 'success' | 'error'; message: string } | null;
 type ContentType = 'resumo' | 'simulado' | 'caso_clínico';
-type CycleType = 'básico' | 'clínico' | 'pré-clínico';
+type CycleType = 'basico' | 'clinico';
 type Difficulty = 'facil' | 'medio' | 'dificil';
 
 interface Questao {
@@ -41,19 +41,19 @@ interface Content {
   id: string; tipo: ContentType; titulo: string; disciplina: string;
   ciclo: CycleType; descricao: string; premium: boolean; tags: string[];
   created_at: string; conteudo_html?: string; file_url?: string;
-  Questões?: Questao[]; tempo_por_questao?: number; vinheta?: string;
+  questoes?: Questao[]; tempo_por_questao?: number; vinheta?: string;
 }
 
 interface FormState {
   tipo: ContentType; titulo: string; disciplina: string; ciclo: CycleType;
   descricao: string; premium: boolean; tags: string[]; conteudo_html: string;
-  file_url: string; tempo_por_questao: number; Questões: Questao[]; vinheta: string;
+  file_url: string; tempo_por_questao: number; questoes: Questao[]; vinheta: string;
 }
 
 const EMPTY_FORM: FormState = {
-  tipo: 'resumo', titulo: '', disciplina: '', ciclo: 'básico',
+  tipo: 'resumo', titulo: '', disciplina: '', ciclo: 'basico',
   descricao: '', premium: true, tags: [], conteudo_html: '',
-  file_url: '', tempo_por_questao: 90, Questões: [], vinheta: '',
+  file_url: '', tempo_por_questao: 90, questoes: [], vinheta: '',
 };
 
 function ToastMessage({ toast, onClose }: { toast: Toast; onClose: () => void }) {
@@ -138,7 +138,7 @@ function ContentForm({ initial, onSuccess, onCancel }: {
       ciclo: initial.ciclo, descricao: initial.descricao, premium: initial.premium,
       tags: initial.tags ?? [], conteudo_html: initial.conteudo_html ?? '',
       file_url: initial.file_url ?? '', tempo_por_questao: initial.tempo_por_questao ?? 90,
-      Questões: (initial.Questões ?? []) as Questao[], vinheta: initial.vinheta ?? '',
+      questoes: (initial.questoes ?? []) as Questao[], vinheta: initial.vinheta ?? '',
     } : { ...EMPTY_FORM }
   );
   const [saving, setSaving] = useState(false);
@@ -159,7 +159,7 @@ function ContentForm({ initial, onSuccess, onCancel }: {
         conteudo_html: form.tipo === 'resumo' ? form.conteudo_html : null,
         file_url: form.tipo === 'resumo' ? form.file_url || null : null,
         tempo_por_questao: form.tipo === 'simulado' ? form.tempo_por_questao : null,
-        questoes: ['simulado', 'caso_clínico'].includes(form.tipo) ? form.Questões : [],
+        questoes: ['simulado', 'caso_clínico'].includes(form.tipo) ? form.questoes : [],
         vinheta: form.tipo === 'caso_clínico' ? form.vinheta : null,
       };
       const url = initial ? `/api/admin/conteudos/${initial.id}` : '/api/admin/conteudos';
@@ -184,7 +184,8 @@ function ContentForm({ initial, onSuccess, onCancel }: {
     }
   };
 
-  const disciplinasFiltradas = DISCIPLINAS.filter((d) => d.ciclo === form.ciclo);
+  const cicloParaDisciplinas: Record<CycleType, 'básico' | 'clínico'> = { basico: 'básico', clinico: 'clínico' };
+  const disciplinasFiltradas = DISCIPLINAS.filter((d) => d.ciclo === cicloParaDisciplinas[form.ciclo]);
 
   return (
     <div className="space-y-5">
@@ -214,9 +215,8 @@ function ContentForm({ initial, onSuccess, onCancel }: {
           <Select value={form.ciclo} onValueChange={(v) => { set('ciclo', v); set('disciplina', ''); }}>
             <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="básico">Ciclo Básico</SelectItem>
-              <SelectItem value="clínico">Ciclo Clínico</SelectItem>
-              <SelectItem value="pré-clínico">Pré-Clínico</SelectItem>
+              <SelectItem value="basico">Ciclo Básico</SelectItem>
+              <SelectItem value="clinico">Ciclo Clínico</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -267,15 +267,15 @@ function ContentForm({ initial, onSuccess, onCancel }: {
             <Input type="number" value={form.tempo_por_questao} onChange={(e) => set('tempo_por_questao', Number(e.target.value))} className="mt-1 w-40" />
           </div>
           <div className="flex items-center justify-between">
-            <Label>Questões ({form.Questões.length})</Label>
-            <Button type="button" variant="outline" size="sm" onClick={() => set('Questões', [...form.Questões, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' as Difficulty }])}>
+            <Label>Questões ({form.questoes.length})</Label>
+            <Button type="button" variant="outline" size="sm" onClick={() => set('questoes', [...form.questoes, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' as Difficulty }])}>
               <PlusCircle className="w-4 h-4 mr-1" />Nova Questão
             </Button>
           </div>
-          {form.Questões.map((q, i) => (
+          {form.questoes.map((q, i) => (
             <QuestaoEditor key={q.id} questao={q} index={i}
-              onChange={(nq) => { const qs = [...form.Questões]; qs[i] = nq; set('Questões', qs); }}
-              onRemove={() => set('Questões', form.Questões.filter((_, idx) => idx !== i))} />
+              onChange={(nq) => { const qs = [...form.questoes]; qs[i] = nq; set('questoes', qs); }}
+              onRemove={() => set('questoes', form.questoes.filter((_, idx) => idx !== i))} />
           ))}
         </div>
       )}
@@ -286,15 +286,15 @@ function ContentForm({ initial, onSuccess, onCancel }: {
             <Textarea value={form.vinheta} onChange={(e) => set('vinheta', e.target.value)} rows={6} className="mt-1" />
           </div>
           <div className="flex items-center justify-between">
-            <Label>Questões ({form.Questões.length})</Label>
-            <Button type="button" variant="outline" size="sm" onClick={() => set('Questões', [...form.Questões, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' as Difficulty }])}>
+            <Label>Questões ({form.questoes.length})</Label>
+            <Button type="button" variant="outline" size="sm" onClick={() => set('questoes', [...form.questoes, { id: crypto.randomUUID(), enunciado: '', alternativas: ['', '', '', '', ''], gabarito: 0, explicacao: '', dificuldade: 'medio' as Difficulty }])}>
               <PlusCircle className="w-4 h-4 mr-1" />Nova Questão
             </Button>
           </div>
-          {form.Questões.map((q, i) => (
+          {form.questoes.map((q, i) => (
             <QuestaoEditor key={q.id} questao={q} index={i}
-              onChange={(nq) => { const qs = [...form.Questões]; qs[i] = nq; set('Questões', qs); }}
-              onRemove={() => set('Questões', form.Questões.filter((_, idx) => idx !== i))} />
+              onChange={(nq) => { const qs = [...form.questoes]; qs[i] = nq; set('questoes', qs); }}
+              onRemove={() => set('questoes', form.questoes.filter((_, idx) => idx !== i))} />
           ))}
         </div>
       )}

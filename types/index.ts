@@ -28,6 +28,8 @@ export interface DisciplineProgress {
 export type ContentType = "resumo" | "simulado" | "caso_clínico";
 export type Difficulty = "facil" | "medio" | "dificil";
 export type CycleType = "básico" | "clínico" | "pré-clínico";
+// Valores realmente aceitos pela coluna `ciclo` da tabela conteudos no banco (sem acento).
+export type ContentCycleType = "basico" | "clinico";
 
 export interface Questao {
   id: string;
@@ -43,7 +45,7 @@ export interface Content {
   tipo: ContentType;
   titulo: string;
   disciplina: string;
-  ciclo: CycleType;
+  ciclo: ContentCycleType;
   descricao: string;
   premium: boolean;
   tags: string[];
@@ -54,7 +56,7 @@ export interface Content {
   conteudo_html?: string;
   file_url?: string;
   // For simulados
-  Questões?: Questao[];
+  questoes?: Questao[];
   tempo_por_questao?: number;
   // For casos clínicos
   vinheta?: string;

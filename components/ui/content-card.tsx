@@ -135,11 +135,11 @@ export function ContentCard({
           {/* Meta */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-3">
-              {content.Questões && content.Questões.length > 0 && (
+              {content.questoes && content.questoes.length > 0 && (
                 <span className="flex items-center gap-1">
                   <Brain className="w-3 h-3" />
-                  {Array.isArray(content.Questões)
-                    ? content.Questões.length
+                  {Array.isArray(content.questoes)
+                    ? content.questoes.length
                     : 0}{" "}
                   Questões
                 </span>
@@ -149,8 +149,8 @@ export function ContentCard({
                   <Clock className="w-3 h-3" />
                   {Math.round(
                     (content.tempo_por_questao *
-                      (Array.isArray(content.Questões)
-                        ? content.Questões.length
+                      (Array.isArray(content.questoes)
+                        ? content.questoes.length
                         : 0)) /
                       60,
                   )}{" "}

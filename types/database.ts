@@ -61,7 +61,7 @@ export interface Database {
           tipo: "resumo" | "simulado" | "caso_clínico";
           titulo: string;
           disciplina: string;
-          ciclo: "básico" | "clínico";
+          ciclo: "basico" | "clinico";
           descricao: string;
           premium: boolean;
           tags: string[];
@@ -80,7 +80,7 @@ export interface Database {
           tipo: "resumo" | "simulado" | "caso_clínico";
           titulo: string;
           disciplina: string;
-          ciclo: "básico" | "clínico";
+          ciclo: "basico" | "clinico";
           descricao: string;
           premium?: boolean;
           tags?: string[];
@@ -89,7 +89,7 @@ export interface Database {
           visualizacoes?: number;
           conteudo_html?: string | null;
           file_url?: string | null;
-          Questões?: Json;
+          questoes?: Json;
           tempo_por_questao?: number;
           vinheta?: string | null;
           exames?: Json;
@@ -98,7 +98,7 @@ export interface Database {
           tipo?: "resumo" | "simulado" | "caso_clínico";
           titulo?: string;
           disciplina?: string;
-          ciclo?: "básico" | "clínico";
+          ciclo?: "basico" | "clinico";
           descricao?: string;
           premium?: boolean;
           tags?: string[];
@@ -106,7 +106,7 @@ export interface Database {
           visualizacoes?: number;
           conteudo_html?: string | null;
           file_url?: string | null;
-          Questões?: Json;
+          questoes?: Json;
           tempo_por_questao?: number;
           vinheta?: string | null;
           exames?: Json;
@@ -176,7 +176,7 @@ export interface Database {
     Enums: {
       plan_type: "free" | "monthly" | "annual";
       content_type: "resumo" | "simulado" | "caso_clínico";
-      cycle_type: "básico" | "clínico";
+      cycle_type: "basico" | "clinico";
       payment_status: "pending" | "approved" | "rejected" | "cancelled";
       payment_method: "pix" | "credit_card";
     };

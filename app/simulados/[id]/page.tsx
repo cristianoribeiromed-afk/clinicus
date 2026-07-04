@@ -34,8 +34,8 @@ function SimuladoContent() {
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
 
-  const Questões: Questao[] = content?.Questões
-    ? (content.Questões as Questao[])
+  const Questões: Questao[] = content?.questoes
+    ? (content.questoes as Questao[])
     : [];
 
   // Fetch simulado
@@ -56,10 +56,10 @@ function SimuladoContent() {
         setContent(contentData);
 
         // Set timer
-        if (contentData.tempo_por_questao && contentData.Questões) {
+        if (contentData.tempo_por_questao && contentData.questoes) {
           setTempoRestante(
             contentData.tempo_por_questao *
-              (contentData.Questões as Questao[]).length,
+              (contentData.questoes as Questao[]).length,
           );
         }
       } catch (error) {
@@ -164,9 +164,9 @@ function SimuladoContent() {
     setRespostas([]);
     setShowResult(false);
     setStartTime(Date.now());
-    if (content?.tempo_por_questao && content?.Questões) {
+    if (content?.tempo_por_questao && content?.questoes) {
       setTempoRestante(
-        content.tempo_por_questao * (content.Questões as Questao[]).length,
+        content.tempo_por_questao * (content.questoes as Questao[]).length,
       );
     }
     setIsRunning(true);

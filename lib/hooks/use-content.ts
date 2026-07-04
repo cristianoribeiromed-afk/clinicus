@@ -104,8 +104,8 @@ export function useQuestões(content: Content | null) {
   const [Questões, setQuestões] = useState<Questao[]>([]);
 
   useEffect(() => {
-    if (content?.Questões) {
-      setQuestões(content.Questões as Questao[]);
+    if (content?.questoes) {
+      setQuestões(content.questoes as Questao[]);
     }
   }, [content]);
 

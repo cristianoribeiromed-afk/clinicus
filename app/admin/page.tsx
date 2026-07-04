@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { supabase } from '@/lib/supabase';
+import { ADMIN_EMAILS } from '@/lib/admin-auth';
 import { DISCIPLINAS } from '@/lib/config';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -162,7 +164,15 @@ function ContentForm({ initial, onSuccess, onCancel }: {
       };
       const url = initial ? `/api/admin/conteudos/${initial.id}` : '/api/admin/conteudos';
       const method = initial ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao salvar');
       setToast({ type: 'success', message: initial ? 'Atualizado!' : 'Criado com sucesso!' });
@@ -313,8 +323,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (adminUser) {
+      if (adminUser && ADMIN_EMAILS.includes(adminUser.email ?? '')) {
         setIsAdmin(true);
+      } else if (adminUser) {
+        // Logado, mas não autorizado como admin
+        router.push('/dashboard');
       } else {
         router.push('/login');
       }
@@ -324,7 +337,10 @@ export default function AdminPage() {
   const fetchContents = useCallback(async () => {
     setLoadingContent(true);
     try {
-      const res = await fetch('/api/admin/conteudos');
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin/conteudos', {
+        headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+      });
       const data = await res.json();
       if (Array.isArray(data)) setContents(data as Content[]);
     } catch (err) {

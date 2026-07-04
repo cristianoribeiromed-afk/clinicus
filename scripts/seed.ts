@@ -319,7 +319,7 @@ async function seedDatabase() {
   console.log("Starting database seed...");
 
   // Clear existing content (optional - remove in production)
-  // await supabase.from('conteúdos').delete().neq('id', 'dummy');
+  // await supabase.from('conteudos').delete().neq('id', 'dummy');
 
   // Insert resumos
   const resumosInsert = [
@@ -336,7 +336,7 @@ async function seedDatabase() {
   ];
 
   const { error: resumoError } = await supabase
-    .from("conteúdos")
+    .from("conteudos")
     .upsert(resumosInsert, { onConflict: "id" });
   if (resumoError) console.error("Error inserting resumos:", resumoError);
   else console.log("Resumos inserted successfully");
@@ -356,7 +356,7 @@ async function seedDatabase() {
   ];
 
   const { error: simuladoError } = await supabase
-    .from("conteúdos")
+    .from("conteudos")
     .upsert(simuladosInsert, { onConflict: "id" });
   if (simuladoError) console.error("Error inserting simulados:", simuladoError);
   else console.log("Simulados inserted successfully");
@@ -376,7 +376,7 @@ async function seedDatabase() {
   ];
 
   const { error: casoError } = await supabase
-    .from("conteúdos")
+    .from("conteudos")
     .upsert(casosInsert, { onConflict: "id" });
   if (casoError) console.error("Error inserting casos clínicos:", casoError);
   else console.log("Casos clínicos inserted successfully");

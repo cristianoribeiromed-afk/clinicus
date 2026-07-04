@@ -44,7 +44,7 @@ function SimuladoContent() {
       try {
         setIsLoading(true);
         const { data, error } = await supabase
-          .from("conteúdos")
+          .from("conteudos")
           .select("*")
           .eq("id", simuladoId)
           .maybeSingle();

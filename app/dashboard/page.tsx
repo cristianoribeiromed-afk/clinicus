@@ -77,7 +77,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold">
-                {getGreeting()}, {profile?.name.split(" ")[0]}!
+                {getGreeting()}, {profile?.name?.split(" ")[0] || user?.email?.split("@")[0] || "Aluno"}!
               </h1>
               <p className="text-muted-foreground">
                 {isPremium

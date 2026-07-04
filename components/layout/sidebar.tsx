@@ -17,12 +17,14 @@ import {
   X,
   Stethoscope,
   Microscope,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DISCIPLINAS, APP_CONFIG } from "@/lib/config";
+import { ADMIN_EMAILS } from "@/lib/admin-auth";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/dashboard" },
@@ -36,6 +38,10 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { profile, isPremium } = useAuthStore();
+  const isAdmin = !!profile?.email && ADMIN_EMAILS.includes(profile.email);
+  const visibleMenuItems = isAdmin
+    ? [...menuItems, { icon: Shield, label: "Admin", href: "/admin" }]
+    : menuItems;
   const [expandedCiclo, setExpandedCiclo] = useState<
     "básico" | "clínico" | null
   >(null);
@@ -87,7 +93,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -242,6 +248,10 @@ export function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { profile } = useAuthStore();
+  const isAdminMobile = !!profile?.email && ADMIN_EMAILS.includes(profile.email);
+  const visibleMenuItems = isAdminMobile
+    ? [...menuItems, { icon: Shield, label: "Admin", href: "/admin" }]
+    : menuItems;
 
   return (
     <>
@@ -291,7 +301,7 @@ export function MobileSidebar() {
             </div>
 
             <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link

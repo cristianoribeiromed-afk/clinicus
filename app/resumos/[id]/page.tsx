@@ -1,52 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Paywall } from "@/components/ui/paywall";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { useAuthStore } from "@/lib/auth-store";
+import { useContentAccess } from "@/lib/hooks/use-content";
 import { ContentSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText } from "lucide-react";
 import Link from "next/link";
-import type { Content } from "@/types";
 
 export default function ResumoPage() {
   const params = useParams();
   const resumoId = params.id as string;
 
   const { isLoading: authLoading } = useAuth(true);
-  const { isPremium } = useAuthStore();
-
-  const [content, setContent] = useState<Content | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchResumo = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from("conteudos")
-          .select("*")
-          .eq("id", resumoId)
-          .maybeSingle();
-
-        if (error) throw error;
-        setContent(data as Content | null);
-      } catch (error) {
-        console.error("Error fetching resumo:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (resumoId) fetchResumo();
-  }, [resumoId]);
-
-  const hasAccess = !content?.premium || isPremium;
+  const { content, hasAccess, isLoading } = useContentAccess(resumoId);
 
   if (authLoading || isLoading) {
     return (

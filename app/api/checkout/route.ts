@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { PLANOS } from "@/lib/config";
 
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
@@ -30,12 +31,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const PLANOS = [
-    { id: "monthly", name: "Mensal", price: 1990, interval: "month" as const },
-    { id: "annual", name: "Anual", price: 14900, interval: "year" as const },
-  ];
-
-  const plan = PLANOS.find((p) => p.id === plan_id);
+  // IMPORTANTE: os preços vêm sempre de lib/config.ts (fonte única da verdade,
+  // é o mesmo array usado nas páginas /planos e /checkout). Nunca duplicar
+  // os valores aqui — foi exatamente essa duplicação que causou o aluno
+  // pagar R$19,90/R$149,00 enquanto a tela mostrava R$29,90/R$229,00.
+  const plan = PLANOS.find((p) => p.id === plan_id && p.id !== "free");
   if (!plan) {
     return NextResponse.json({ error: "Plano invalido" }, { status: 400 });
   }

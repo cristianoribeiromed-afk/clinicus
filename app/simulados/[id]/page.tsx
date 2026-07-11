@@ -9,12 +9,12 @@ import { QuestionCard } from "@/components/ui/question-card";
 import { ResultDisplay } from "@/components/ui/result-display";
 import { Paywall } from "@/components/ui/paywall";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { useAuthStore } from "@/lib/auth-store";
+import { useContentAccess } from "@/lib/hooks/use-content";
 import { ContentSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Brain, Lock } from "lucide-react";
 import Link from "next/link";
-import type { Content, Questao } from "@/types";
+import type { Questao } from "@/types";
 
 function SimuladoContent() {
   const params = useParams();
@@ -23,10 +23,8 @@ function SimuladoContent() {
   const simuladoId = params.id as string;
 
   const { profile, isLoading: authLoading } = useAuth(true);
-  const { isPremium } = useAuthStore();
+  const { content, hasAccess, isLoading } = useContentAccess(simuladoId);
 
-  const [content, setContent] = useState<Content | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [questaoAtual, setQuestaoAtual] = useState(0);
   const [respostas, setRespostas] = useState<number[]>([]);
   const [showResult, setShowResult] = useState(false);
@@ -38,39 +36,14 @@ function SimuladoContent() {
     ? (content.questoes as Questao[])
     : [];
 
-  // Fetch simulado
+  // Configura o cronometro assim que o conteudo completo (com acesso liberado) chega
   useEffect(() => {
-    const fetchSimulado = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from("conteudos")
-          .select("*")
-          .eq("id", simuladoId)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (!data) throw new Error("Simulado nao encontrado");
-
-        const contentData = data as Content;
-        setContent(contentData);
-
-        // Set timer
-        if (contentData.tempo_por_questao && contentData.questoes) {
-          setTempoRestante(
-            contentData.tempo_por_questao *
-              (contentData.questoes as Questao[]).length,
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching simulado:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (simuladoId) fetchSimulado();
-  }, [simuladoId]);
+    if (hasAccess && content?.tempo_por_questao && content?.questoes) {
+      setTempoRestante(
+        content.tempo_por_questao * (content.questoes as Questao[]).length,
+      );
+    }
+  }, [hasAccess, content]);
 
   // Timer effect
   useEffect(() => {
@@ -171,9 +144,6 @@ function SimuladoContent() {
     }
     setIsRunning(true);
   };
-
-  // Check premium access
-  const hasAccess = !content?.premium || isPremium;
 
   if (authLoading || isLoading) {
     return (

@@ -20,30 +20,26 @@ export function useContentList(options: UseContentListOptions = {}) {
   const fetchContents = useCallback(async () => {
     try {
       setLoading(true);
-      let query = supabase.from("conteudos").select("*");
-
-      if (options.tipo) {
-        query = query.eq("tipo", options.tipo);
-      }
-      if (options.disciplina) {
-        query = query.eq("disciplina", options.disciplina);
-      }
-      if (options.ciclo) {
-        query = query.eq("ciclo", options.ciclo);
-      }
-      if (options.premium !== undefined) {
-        query = query.eq("premium", options.premium);
-      }
-      if (options.limit) {
-        query = query.limit(options.limit);
-      }
-
-      query = query.order("created_at", { ascending: false });
-
-      const { data, error: fetchError } = await query;
+      // Usa a função RPC de preview (nunca traz conteudo_html/file_url/Questões),
+      // por isso funciona igual pra usuário free e pago — o paywall é decidido
+      // na tela a partir do campo `premium`, sem nunca baixar o conteúdo protegido.
+      const { data, error: fetchError } = await supabase.rpc(
+        "get_conteudos_preview",
+        {
+          p_tipo: options.tipo ?? null,
+          p_disciplina: options.disciplina ?? null,
+          p_ciclo: options.ciclo ?? null,
+          p_limit: options.limit ?? null,
+        },
+      );
 
       if (fetchError) throw fetchError;
-      setContents(data || []);
+
+      let result = (data || []) as Content[];
+      if (options.premium !== undefined) {
+        result = result.filter((c) => c.premium === options.premium);
+      }
+      setContents(result);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erro ao carregar conteudos",
@@ -60,6 +56,67 @@ export function useContentList(options: UseContentListOptions = {}) {
   return { contents, isLoading, error, refetch: fetchContents };
 }
 
+// Busca um conteudo com acesso seguro:
+// 1) Sempre busca o preview (metadados) via RPC — funciona pra qualquer usuário.
+// 2) Só tenta buscar o conteudo completo se o item não for premium OU se o RLS
+//    liberar (usuário com plano pago ativo). Se o RLS bloquear, `full` volta
+//    null e a tela mostra o Paywall usando os metadados do preview — nunca
+//    chega a existir no navegador o conteudo protegido de quem não pagou.
+export function useContentAccess(id: string) {
+  const [preview, setPreview] = useState<Content | null>(null);
+  const [full, setFull] = useState<Content | null>(null);
+  const [isLoading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+
+        const { data: previewData, error: previewError } = await supabase
+          .rpc("get_conteudo_preview_by_id", { p_id: id })
+          .maybeSingle();
+
+        if (previewError) throw previewError;
+        setPreview((previewData as Content) ?? null);
+
+        if (previewData) {
+          const { data: fullData } = await supabase
+            .from("conteudos")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle();
+
+          setFull(fullData as Content | null);
+
+          if (fullData) {
+            await supabase
+              .from("conteudos")
+              .update({ visualizacoes: (fullData.visualizacoes ?? 0) + 1 })
+              .eq("id", id);
+          }
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao carregar conteudo",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, [id]);
+
+  const hasAccess = !!full;
+  const content = full ?? preview;
+
+  return { content, preview, hasAccess, isLoading, error };
+}
+
+/** @deprecated use `useContentAccess` — este hook ainda faz select("*") direto
+ * e não deve ser usado para conteúdo premium. Mantido só por compatibilidade. */
 export function useContent(id: string) {
   const [content, setContent] = useState<Content | null>(null);
   const [isLoading, setLoading] = useState(true);

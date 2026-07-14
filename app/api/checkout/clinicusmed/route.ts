@@ -85,9 +85,12 @@ export async function POST(req: NextRequest) {
       pending: `${siteUrl}/?pagamento=pendente`,
     },
     auto_return: "approved",
-    // IMPORTANTE: essa é a URL da API (Vercel), não a do site de marketing —
-    // são domínios diferentes. Configure CLINICUS_API_URL nas env vars.
-    notification_url: `${process.env.CLINICUS_API_URL}/api/webhook/clinicusmed-mp`,
+    // Aponta pra rota UNICA de webhook que ja existe no projeto (a mesma
+    // que a Clinicus SaaS usa) - o Mercado Pago so aceita 1 URL de webhook
+    // por aplicacao. A rota /api/webhook/mercadopago distingue pagamentos
+    // do ClinicusMed (via metadata email/plano) dos da Clinicus SaaS
+    // (via external_reference apontando pra tabela "pagamentos").
+    notification_url: `${process.env.CLINICUS_API_URL}/api/webhook/mercadopago`,
   };
 
   try {

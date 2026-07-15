@@ -14,6 +14,32 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+// Origens autorizadas a chamar essa rota a partir do navegador do aluno.
+// O site estático do ClinicusMed roda em domínio diferente da API (Vercel),
+// então sem esses headers o navegador bloqueia a chamada por CORS.
+const ALLOWED_ORIGINS = [
+  "https://clinicusmed.com.br",
+  "https://www.clinicusmed.com.br",
+  "https://cristianoribeiromed-afk.github.io",
+];
+
+function corsHeaders(origin: string | null) {
+  const allowOrigin =
+    origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(req.headers.get("origin")),
+  });
+}
+
 interface CheckoutPayload {
   email: string;
   nome: string;
@@ -35,16 +61,18 @@ function isValidPayload(body: unknown): body is CheckoutPayload {
 }
 
 export async function POST(req: NextRequest) {
+  const cors = corsHeaders(req.headers.get("origin"));
+
   if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
     return NextResponse.json(
       { success: false, message: "Mercado Pago não configurado no servidor." },
-      { status: 500 }
+      { status: 500, headers: cors }
     );
   }
   if (!process.env.CLINICUS_API_URL) {
     return NextResponse.json(
       { success: false, message: "CLINICUS_API_URL não configurada — o Mercado Pago não saberia pra onde enviar a confirmação." },
-      { status: 500 }
+      { status: 500, headers: cors }
     );
   }
 
@@ -52,13 +80,13 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ success: false, message: "JSON inválido." }, { status: 400 });
+    return NextResponse.json({ success: false, message: "JSON inválido." }, { status: 400, headers: cors });
   }
 
   if (!isValidPayload(body)) {
     return NextResponse.json(
       { success: false, message: "Payload inválido. Campos obrigatórios: email, nome, plano, itemNome, preco." },
-      { status: 400 }
+      { status: 400, headers: cors }
     );
   }
 
@@ -109,7 +137,7 @@ export async function POST(req: NextRequest) {
       console.error("Erro ao criar preferência MP:", data);
       return NextResponse.json(
         { success: false, message: data.message || "Erro ao criar checkout." },
-        { status: 500 }
+        { status: 500, headers: cors }
       );
     }
 
@@ -117,12 +145,12 @@ export async function POST(req: NextRequest) {
       success: true,
       checkoutUrl: data.init_point,
       sandboxUrl: data.sandbox_init_point,
-    });
+    }, { headers: cors });
   } catch (e) {
     console.error("Falha de conexão com Mercado Pago:", e);
     return NextResponse.json(
       { success: false, message: "Falha de conexão com o Mercado Pago." },
-      { status: 500 }
+      { status: 500, headers: cors }
     );
   }
 }

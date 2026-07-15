@@ -14,19 +14,18 @@ async function enviarEmailConfirmacaoClinicusMed(email: string, nome: string, pl
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "ClinicusMed <acesso@clinicusmed.com.br>",
       to: email,
-      subject: "✅ Seu acesso ao ClinicusMed está liberado!",
+      subject: "✅ Pagamento confirmado — seja bem-vindo(a) ao ClinicusMed!",
       html: `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f7f4ef;">
           <h2 style="color: #0D8CF5;">Oi, ${nome}! 👋</h2>
-          <p>Seu pagamento foi confirmado e o acesso ao <strong>${planoLabel}</strong> já está liberado.</p>
-          <p>Pode entrar na plataforma agora mesmo:</p>
+          <p>Pagamento confirmado! ✅ Seu material (<strong>${planoLabel}</strong>) vai ser liberado em alguns minutos.</p>
           <p style="text-align: center; margin: 24px 0;">
             <a href="${siteUrl}" style="background: #0D8CF5; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
               Acessar o ClinicusMed
             </a>
           </p>
           <p style="font-size: 13px; color: #666;">Use o mesmo e-mail que você usou na compra (${email}) pra confirmar o acesso na plataforma.</p>
-          <p style="font-size: 13px; color: #666;">Qualquer dúvida, só chamar no WhatsApp. Bons estudos! 🩺</p>
+          <p>Seja bem-vindo(a) ao ClinicusMed — bons estudos! 🩺</p>
         </div>
       `,
     });

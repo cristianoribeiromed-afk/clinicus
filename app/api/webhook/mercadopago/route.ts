@@ -44,6 +44,52 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
+// Sincroniza a liberação de acesso com a planilha do Google Sheets (via
+// Google Apps Script), que é a mesma planilha que o site estático já lê
+// hoje pelo CSV publicado. NUNCA deve travar o webhook do Mercado Pago —
+// por isso é sempre chamada dentro de um try/catch que só loga o erro.
+// O Supabase (access_sync) continua sendo a fonte de verdade; a planilha é
+// só um espelho automático pra não precisar mais editar na mão.
+async function sincronizarPlanilhaAcessos(params: {
+  email: string;
+  plano: string;
+  nome: string | null;
+  origem: string;
+  idTransacao: string;
+}) {
+  const url = process.env.APPS_SCRIPT_WEBHOOK_URL;
+  const secret = process.env.APPS_SCRIPT_SECRET;
+
+  if (!url || !secret) {
+    console.warn(
+      "APPS_SCRIPT_WEBHOOK_URL ou APPS_SCRIPT_SECRET não configurados — pulando sincronização com a planilha.",
+    );
+    return;
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secret,
+        email: params.email,
+        plano: params.plano,
+        nome: params.nome,
+        ativo: true,
+        origem: params.origem,
+        idTransacao: params.idTransacao,
+      }),
+    });
+    const data = await response.json();
+    if (!data.ok) {
+      console.error("Apps Script retornou erro ao sincronizar planilha:", data);
+    }
+  } catch (e) {
+    console.error("Falha ao chamar o Apps Script de sincronização da planilha:", e);
+  }
+}
+
 export async function POST(request: NextRequest) {
   // Skip if using placeholder credentials
   if (
@@ -136,6 +182,16 @@ export async function POST(request: NextRequest) {
         if (!jaProcessado) {
           await enviarEmailConfirmacaoClinicusMed(email, nome || "aluno(a)", plano);
         }
+
+        // Espelha a liberação na planilha do Google Sheets — não bloqueia
+        // nem falha o webhook se der problema (ver comentário na função).
+        await sincronizarPlanilhaAcessos({
+          email,
+          plano,
+          nome,
+          origem: "mercadopago",
+          idTransacao,
+        });
 
         return NextResponse.json({ received: true, origem: "clinicusmed", acessoLiberado: true, email, plano });
       }

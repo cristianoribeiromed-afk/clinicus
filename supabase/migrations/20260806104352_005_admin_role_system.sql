@@ -71,12 +71,18 @@ CREATE TRIGGER trg_prevent_admin_self_elevation
 -- ============================================================
 -- 3) Migra o admin que já existia na lista fixa do código
 -- ============================================================
--- Usa UPDATE direto (não passa pelo trigger de proteção porque essa
--- migration roda como owner/service role no SQL Editor, não como
--- 'authenticated' — o bloqueio é só pra chamadas vindas de client).
+-- Desabilita o trigger só durante essa UPDATE pontual: mesmo rodando
+-- essa migração via SQL Editor (conexão direta no Postgres, não
+-- 'service_role'), o gatilho criado no passo 2 bloquearia essa
+-- própria UPDATE -- confirmado na prática ao aplicar essa migração
+-- em produção (ver migração 006, que corrigiu isso depois).
+ALTER TABLE public.users DISABLE TRIGGER trg_prevent_admin_self_elevation;
+
 UPDATE public.users
 SET is_admin = true
 WHERE email = 'ribeiro@unochapeco.edu.br';
+
+ALTER TABLE public.users ENABLE TRIGGER trg_prevent_admin_self_elevation;
 
 -- ============================================================
 -- 4) RLS — NÃO precisa de política nova

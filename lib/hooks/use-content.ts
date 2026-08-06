@@ -7,7 +7,7 @@ import type { Content, Questao } from "@/types";
 interface UseContentListOptions {
   tipo?: "resumo" | "simulado" | "caso_clinico";
   disciplina?: string;
-  ciclo?: "básico" | "clínico";
+  ciclo?: "basico" | "clinico";
   premium?: boolean;
   limit?: number;
 }

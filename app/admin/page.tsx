@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { supabase } from '@/lib/supabase';
-import { ADMIN_EMAILS } from '@/lib/admin-auth';
 import { DISCIPLINAS } from '@/lib/config';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -309,7 +308,7 @@ function ContentForm({ initial, onSuccess, onCancel }: {
 }
 
 export default function AdminPage() {
-  const { user: adminUser, isLoading } = useAuth();
+  const { user: adminUser, profile: adminProfile, isLoading } = useAuth();
   const router = useRouter();
   const [contents, setContents] = useState<Content[]>([]);
   const [loadingContent, setLoadingContent] = useState(true);
@@ -323,7 +322,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (adminUser && ADMIN_EMAILS.includes(adminUser.email ?? '')) {
+      if (adminUser && (adminProfile as any)?.is_admin) {
         setIsAdmin(true);
       } else if (adminUser) {
         // Logado, mas não autorizado como admin
@@ -332,7 +331,7 @@ export default function AdminPage() {
         router.push('/login');
       }
     }
-  }, [isLoading, adminUser, router]);
+  }, [isLoading, adminUser, adminProfile, router]);
 
   const fetchContents = useCallback(async () => {
     setLoadingContent(true);

@@ -24,7 +24,6 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DISCIPLINAS, APP_CONFIG } from "@/lib/config";
-import { ADMIN_EMAILS } from "@/lib/admin-auth";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/dashboard" },
@@ -38,7 +37,7 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { profile, isPremium } = useAuthStore();
-  const isAdmin = !!profile?.email && ADMIN_EMAILS.includes(profile.email);
+  const isAdmin = !!(profile as any)?.is_admin;
   const visibleMenuItems = isAdmin
     ? [...menuItems, { icon: Shield, label: "Admin", href: "/admin" }]
     : menuItems;
@@ -248,7 +247,7 @@ export function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { profile } = useAuthStore();
-  const isAdminMobile = !!profile?.email && ADMIN_EMAILS.includes(profile.email);
+  const isAdminMobile = !!(profile as any)?.is_admin;
   const visibleMenuItems = isAdminMobile
     ? [...menuItems, { icon: Shield, label: "Admin", href: "/admin" }]
     : menuItems;

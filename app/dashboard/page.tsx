@@ -85,7 +85,16 @@ export default function DashboardPage() {
       } catch (err) {
         console.error("[Dashboard] erro ao carregar:", err);
         if (ativo) {
-          setErro(err instanceof Error ? err.message : "Erro desconhecido ao carregar o dashboard.");
+          const codigo = (err as any)?.code;
+          if (codigo === "PGRST303") {
+            setErro(
+              "O relógio do seu computador parece estar desconfigurado, o que impede o login de ser validado. Verifique se a data/hora do seu dispositivo está com 'ajuste automático' ativado, depois recarregue a página.",
+            );
+          } else {
+            setErro(
+              err instanceof Error ? err.message : "Erro desconhecido ao carregar o dashboard.",
+            );
+          }
           setStatus("erro");
         }
       }

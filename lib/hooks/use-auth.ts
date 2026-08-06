@@ -27,6 +27,15 @@ export function useAuth(requireAuth = false) {
       } catch (error) {
         console.error("Error fetching profile:", error);
         setProfile(null);
+        // PGRST303 = "JWT issued at future" -- o relógio do dispositivo
+        // do aluno está adiantado em relação ao servidor, o token é
+        // rejeitado por segurança. Sem esse tratamento, a tela ficava
+        // presa num carregamento silencioso (parecia página em branco).
+        if ((error as any)?.code === "PGRST303") {
+          setInitError(
+            "O relógio do seu dispositivo parece estar desconfigurado, o que impede o login de ser validado. Ative o ajuste automático de data/hora e recarregue a página.",
+          );
+        }
       }
     },
     [setProfile],

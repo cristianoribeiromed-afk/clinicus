@@ -114,7 +114,8 @@ export default function DashboardPage() {
     return () => {
       ativo = false;
     };
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (status === "carregando") {
     return (

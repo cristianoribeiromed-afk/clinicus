@@ -86,9 +86,22 @@ CREATE INDEX IF NOT EXISTS idx_access_sync_ativo ON public.access_sync(ativo);
 CREATE INDEX IF NOT EXISTS idx_access_sync_id_transacao ON public.access_sync(id_transacao);
 
 -- ============================================================
--- 4) Trigger de updated_at (reaproveita a função já criada na
---    migração 001 — update_updated_at_column)
+-- 4) Trigger de updated_at
 -- ============================================================
+-- A função abaixo é a MESMA que a migração 001 já define — mas como
+-- descobrimos (rodando essa migração) que a 001 nunca foi aplicada
+-- nesse projeto Supabase (erro: function update_updated_at_column()
+-- does not exist), essa migração 003 não pode mais assumir que ela já
+-- existe. CREATE OR REPLACE é seguro de rodar mesmo se a função já
+-- existir de outra origem — não quebra nada, só garante.
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $func$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$func$ LANGUAGE plpgsql;
+
 DROP TRIGGER IF EXISTS update_access_sync_updated_at ON public.access_sync;
 CREATE TRIGGER update_access_sync_updated_at
   BEFORE UPDATE ON public.access_sync

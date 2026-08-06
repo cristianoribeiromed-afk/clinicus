@@ -17,6 +17,8 @@
   incluindo semestre, etapa e slug no retorno.
 */
 
+DROP FUNCTION IF EXISTS public.get_conteudos_preview(text, text, text, integer);
+
 CREATE OR REPLACE FUNCTION public.get_conteudos_preview(
   p_tipo text DEFAULT NULL,
   p_disciplina text DEFAULT NULL,
@@ -55,6 +57,8 @@ AS $$
   ORDER BY c.created_at DESC
   LIMIT COALESCE(p_limit, 1000000);
 $$;
+
+DROP FUNCTION IF EXISTS public.get_conteudo_preview_by_id(uuid);
 
 CREATE OR REPLACE FUNCTION public.get_conteudo_preview_by_id(p_id uuid)
 RETURNS TABLE (

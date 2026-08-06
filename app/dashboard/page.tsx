@@ -17,12 +17,11 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ContentCard, ContentCardSkeleton } from "@/components/ui/content-card";
-import { DisciplinaCard } from "@/components/ui/disciplina-card";
 import { ProgressBar, StreakIndicator } from "@/components/ui/stats-card";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useContentList } from "@/lib/hooks/use-content";
 import { useAuthStore } from "@/lib/auth-store";
-import { DISCIPLINAS } from "@/lib/config";
+import { useDisciplinasReais } from "@/lib/hooks/use-disciplinas";
 import { Button } from "@/components/ui/button";
 import type { Content } from "@/types";
 
@@ -41,6 +40,8 @@ export default function DashboardPage() {
   const { contents: recentContent, isLoading: contentLoading } = useContentList(
     { limit: 4 },
   );
+  const { semestres: semestresReais } = useDisciplinasReais();
+  const disciplinasReais = semestresReais.flatMap((s) => s.disciplinas);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -191,15 +192,43 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {DISCIPLINAS.slice(0, 6).map((disc) => (
-              <DisciplinaCard
-                key={disc.slug}
-                disciplina={disc}
-                contentCount={Math.floor(Math.random() * 20) + 5}
-                progress={Math.floor(Math.random() * 100)}
-                variant="dashboard"
-              />
-            ))}
+            {disciplinasReais.length > 0 ? (
+              disciplinasReais.slice(0, 6).map((disc) => (
+                <Link
+                  key={`${disc.semestre}-${disc.disciplina}`}
+                  href={`/resumos?disciplina=${encodeURIComponent(disc.disciplina)}`}
+                  className="group block"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.02 }}
+                    className="bg-card rounded-xl border border-border p-4 transition-all hover:border-primary/30"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10">
+                        <BookOpen className="w-6 h-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
+                          {disc.disciplina}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {disc.semestre.replace("semestre-", "")}º semestre
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full p-8 text-center rounded-xl bg-card border border-border">
+                <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma disciplina disponível ainda.
+                </p>
+              </div>
+            )}
           </div>
         </motion.div>
 

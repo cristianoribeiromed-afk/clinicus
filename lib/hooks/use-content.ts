@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/auth-store";
+import { loggedQuery, logLoadingFim } from "@/lib/supabase-debug";
 import type { Content, Questao } from "@/types";
 
 interface UseContentListOptions {
@@ -25,13 +26,21 @@ export function useContentList(options: UseContentListOptions = {}) {
       // Usa a função RPC de preview (nunca traz conteudo_html/file_url/Questões),
       // por isso funciona igual pra usuário free e pago — o paywall é decidido
       // na tela a partir do campo `premium`, sem nunca baixar o conteúdo protegido.
-      const { data, error: fetchError } = await supabase.rpc(
-        "get_conteudos_preview",
-        {
+      const { data, error: fetchError } = await loggedQuery(
+        `useContentList: listar conteúdos (tipo=${options.tipo ?? "todos"})`,
+        supabase.rpc("get_conteudos_preview", {
           p_tipo: options.tipo ?? null,
           p_disciplina: options.disciplina ?? null,
           p_ciclo: options.ciclo ?? null,
           p_limit: options.limit ?? null,
+        }),
+        {
+          rpc: "get_conteudos_preview",
+          filtros: {
+            tipo: options.tipo,
+            disciplina: options.disciplina,
+            ciclo: options.ciclo,
+          },
         },
       );
 
@@ -75,6 +84,7 @@ export function useContentList(options: UseContentListOptions = {}) {
         err instanceof Error ? err.message : "Erro ao carregar conteudos",
       );
     } finally {
+      logLoadingFim("useContentList");
       setLoading(false);
     }
   }, [options, user]);

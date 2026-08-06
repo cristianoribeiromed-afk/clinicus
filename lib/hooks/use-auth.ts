@@ -4,6 +4,7 @@ import { useEffect, useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/lib/supabase";
+import { loggedQuery, logLoadingFim } from "@/lib/supabase-debug";
 
 export function useAuth(requireAuth = false) {
   const router = useRouter();
@@ -16,11 +17,11 @@ export function useAuth(requireAuth = false) {
   const fetchProfile = useCallback(
     async (userId: string) => {
       try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .maybeSingle();
+        const { data, error } = await loggedQuery(
+          "useAuth: buscar perfil do usuário",
+          supabase.from("users").select("*").eq("id", userId).maybeSingle(),
+          { tabela: "users", filtros: { id: userId } },
+        );
 
         if (error) throw error;
         setProfile(data);
@@ -119,7 +120,10 @@ export function useAuth(requireAuth = false) {
       } finally {
         finished = true;
         clearTimeout(timeoutId);
-        if (mounted) setLoading(false);
+        if (mounted) {
+          logLoadingFim("useAuth: inicialização de sessão");
+          setLoading(false);
+        }
       }
     };
 

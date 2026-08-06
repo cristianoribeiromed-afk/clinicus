@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { loggedQuery, logLoadingFim } from "@/lib/supabase-debug";
 import { AppLayout } from "@/components/layout/app-layout";
 import { BookOpen, FileText, Stethoscope } from "lucide-react";
 
@@ -45,8 +46,11 @@ export default function DashboardPage() {
 
     async function carregar() {
       try {
-        const { data: sessionData, error: sessionError } =
-          await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await loggedQuery(
+          "Dashboard: verificar sessão",
+          supabase.auth.getSession(),
+          {},
+        );
         console.log("[Dashboard] getSession retornou:", {
           temSessao: !!sessionData?.session,
           erro: sessionError,
@@ -61,11 +65,15 @@ export default function DashboardPage() {
         }
 
         const userId = sessionData.session.user.id;
-        const { data: userRow, error: userError } = await supabase
-          .from("users")
-          .select("name, email, plan")
-          .eq("id", userId)
-          .maybeSingle();
+        const { data: userRow, error: userError } = await loggedQuery(
+          "Dashboard: buscar perfil do usuário",
+          supabase
+            .from("users")
+            .select("name, email, plan")
+            .eq("id", userId)
+            .maybeSingle(),
+          { tabela: "users", filtros: { id: userId } },
+        );
 
         console.log("[Dashboard] busca de perfil retornou:", {
           userRow,
@@ -80,6 +88,7 @@ export default function DashboardPage() {
             email: sessionData.session.user.email || "",
             plano: (userRow as any)?.plan || "free",
           });
+          logLoadingFim("Dashboard (sucesso)");
           setStatus("pronto");
         }
       } catch (err) {

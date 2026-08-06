@@ -35,7 +35,7 @@ const staggerContainer = {
 };
 
 export default function DashboardPage() {
-  const { user, profile, isLoading: authLoading } = useAuth(true);
+  const { user, profile, isLoading: authLoading, initError } = useAuth(true);
   const { isPremium } = useAuthStore();
   const { contents: recentContent, isLoading: contentLoading } = useContentList(
     { limit: 4 },
@@ -49,6 +49,24 @@ export default function DashboardPage() {
     if (hour < 18) return "Boa tarde";
     return "Boa noite";
   };
+
+  if (initError) {
+    return (
+      <AppLayout>
+        <div className="p-4 lg:p-8 flex items-center justify-center min-h-[60vh]">
+          <div className="max-w-md text-center space-y-3">
+            <p className="text-sm text-destructive font-medium">{initError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-sm underline text-muted-foreground hover:text-foreground"
+            >
+              Recarregar página
+            </button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (authLoading) {
     return (

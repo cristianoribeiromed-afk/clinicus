@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/lib/supabase";
@@ -10,6 +10,7 @@ export function useAuth(requireAuth = false) {
   const { user, profile, isLoading, setUser, setProfile, setLoading, reset } =
     useAuthStore();
   const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
 
   // Fetch user profile from database
   const fetchProfile = useCallback(
@@ -64,6 +65,26 @@ export function useAuth(requireAuth = false) {
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
+    let finished = false;
+
+    // Rede de segurança: se supabase.auth.getSession() (ou o fetch de
+    // perfil) travar sem nunca resolver nem rejeitar -- o que pode
+    // acontecer com env var mal configurada, rede lenta, etc. -- isso
+    // força o loading a terminar em 8s, mostrando um erro visível em
+    // vez de deixar a tela presa num esqueleto de carregamento pra
+    // sempre (o que parece "página em branco" pro usuário, já que o
+    // esqueleto usa cores muito próximas do fundo).
+    const timeoutId = setTimeout(() => {
+      if (mounted && !finished) {
+        console.error(
+          "Timeout: supabase.auth.getSession() não respondeu em 8s. Verifique NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY na Vercel.",
+        );
+        setInitError(
+          "Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente.",
+        );
+        setLoading(false);
+      }
+    }, 8000);
 
     const initAuth = async () => {
       try {
@@ -81,7 +102,14 @@ export function useAuth(requireAuth = false) {
         }
       } catch (error) {
         console.error("Auth init error:", error);
+        if (mounted) {
+          setInitError(
+            error instanceof Error ? error.message : "Erro ao iniciar sessão.",
+          );
+        }
       } finally {
+        finished = true;
+        clearTimeout(timeoutId);
         if (mounted) setLoading(false);
       }
     };
@@ -116,6 +144,7 @@ export function useAuth(requireAuth = false) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, [setUser, setProfile, setLoading, reset, fetchProfile, registerSession]);
@@ -156,6 +185,7 @@ export function useAuth(requireAuth = false) {
     user,
     profile,
     isLoading,
+    initError,
     isAuthenticated: !!user,
     isPremium: useAuthStore.getState().isPremium,
     signOut,

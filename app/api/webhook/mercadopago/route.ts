@@ -1,6 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import crypto from "node:crypto";
+
+/**
+ * Verifica a assinatura do webhook do Mercado Pago (x-signature).
+ * Documentação oficial: https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/webhooks
+ *
+ * Formato do header x-signature: "ts=1704908010,v1=618c853452..."
+ * O "manifest" assinado é: id:{dataId};request-id:{xRequestId};ts:{ts};
+ *
+ * Se MERCADOPAGO_WEBHOOK_SECRET não estiver configurada, a verificação
+ * é PULADA (com log de aviso) em vez de bloquear o webhook inteiro —
+ * isso permite configurar o secret no painel do Mercado Pago e na
+ * Vercel sem quebrar pagamentos no meio do caminho. Depois que a
+ * variável existir, a verificação passa a ser obrigatória.
+ */
+function verificarAssinaturaWebhook(
+  xSignature: string | null,
+  xRequestId: string | null,
+  dataId: string | null,
+): { valido: boolean; motivo?: string } {
+  const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+  if (!secret) {
+    console.warn(
+      "MERCADOPAGO_WEBHOOK_SECRET não configurada — pulando verificação de assinatura. Configure o secret no painel do Mercado Pago (Webhooks > Configurar assinatura secreta) e na Vercel assim que possível.",
+    );
+    return { valido: true, motivo: "secret_nao_configurado" };
+  }
+
+  if (!xSignature || !xRequestId || !dataId) {
+    return { valido: false, motivo: "headers_ausentes" };
+  }
+
+  const partes = Object.fromEntries(
+    xSignature.split(",").map((p) => {
+      const [k, v] = p.split("=");
+      return [k?.trim(), v?.trim()];
+    }),
+  );
+  const ts = partes["ts"];
+  const v1 = partes["v1"];
+  if (!ts || !v1) {
+    return { valido: false, motivo: "formato_assinatura_invalido" };
+  }
+
+  const manifest = `id:${dataId.toLowerCase()};request-id:${xRequestId};ts:${ts};`;
+  const hashCalculado = crypto
+    .createHmac("sha256", secret)
+    .update(manifest)
+    .digest("hex");
+
+  const assinaturaValida =
+    hashCalculado.length === v1.length &&
+    crypto.timingSafeEqual(Buffer.from(hashCalculado), Buffer.from(v1));
+
+  return { valido: assinaturaValida, motivo: assinaturaValida ? undefined : "hash_nao_bate" };
+}
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -104,6 +160,25 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { type, data } = body;
+
+    // Verificação de assinatura — confirma que essa notificação veio
+    // mesmo do Mercado Pago, e não de alguém forjando uma chamada pro
+    // nosso endpoint. Ver função verificarAssinaturaWebhook() acima.
+    const xSignature = request.headers.get("x-signature");
+    const xRequestId = request.headers.get("x-request-id");
+    const dataIdQuery = request.nextUrl.searchParams.get("data.id");
+    const { valido, motivo } = verificarAssinaturaWebhook(
+      xSignature,
+      xRequestId,
+      dataIdQuery || (data?.id ? String(data.id) : null),
+    );
+    if (!valido) {
+      console.error("Assinatura de webhook do Mercado Pago inválida:", motivo);
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401 },
+      );
+    }
 
     if (type !== "payment") {
       return NextResponse.json({ received: true });

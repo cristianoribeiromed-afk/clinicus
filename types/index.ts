@@ -52,6 +52,10 @@ export interface Content {
   created_at: string;
   updated_at: string;
   visualizacoes: number;
+  semestre?: string;
+  etapa?: string;
+  slug?: string;
+  professor?: string;
   // For resumos
   conteudo_html?: string;
   file_url?: string;

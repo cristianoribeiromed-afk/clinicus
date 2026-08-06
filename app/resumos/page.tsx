@@ -48,6 +48,26 @@ export default function ResumosPage() {
     new Set(contents.map((c) => c.disciplina)),
   );
 
+  // Agrupa Semestre -> Matéria, na mesma lógica do Sidebar (ver
+  // IDENTIDADE_CLINICUS.md: navegação segue a lógica real da Clinicus,
+  // não uma lista plana de "produtos" misturados).
+  const agrupado = filteredContents.reduce<
+    Record<string, Record<string, typeof filteredContents>>
+  >((acc, item) => {
+    const sem = item.semestre || "outros";
+    const disc = item.disciplina || "Sem disciplina";
+    if (!acc[sem]) acc[sem] = {};
+    if (!acc[sem][disc]) acc[sem][disc] = [];
+    acc[sem][disc].push(item);
+    return acc;
+  }, {});
+
+  const semestresOrdenados = Object.keys(agrupado).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, ""), 10) || 999;
+    const numB = parseInt(b.replace(/\D/g, ""), 10) || 999;
+    return numA - numB;
+  });
+
   return (
     <AppLayout>
       <div className="p-4 lg:p-8 space-y-6">
@@ -119,18 +139,41 @@ export default function ResumosPage() {
             ))}
           </div>
         ) : filteredContents.length > 0 ? (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-          >
-            {filteredContents.map((content) => (
-              <motion.div key={content.id} variants={fadeInUp}>
-                <ContentCard content={content} showDescription />
-              </motion.div>
+          <div className="space-y-10">
+            {semestresOrdenados.map((sem) => (
+              <div key={sem} className="space-y-6">
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm">
+                    {sem.replace("semestre-", "").replace(/^0/, "")}
+                  </span>
+                  {sem.replace("semestre-", "")}º Semestre
+                </h2>
+                {Object.keys(agrupado[sem])
+                  .sort((a, b) => a.localeCompare(b, "pt-BR"))
+                  .map((disc) => (
+                    <div key={disc} className="space-y-3 pl-2">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        {disc}
+                      </h3>
+                      <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                          visible: { transition: { staggerChildren: 0.03 } },
+                        }}
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                      >
+                        {agrupado[sem][disc].map((content) => (
+                          <motion.div key={content.id} variants={fadeInUp}>
+                            <ContentCard content={content} showDescription />
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </div>
+                  ))}
+              </div>
             ))}
-          </motion.div>
+          </div>
         ) : (
           <div className="p-12 text-center rounded-xl bg-card border border-border">
             <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

@@ -154,11 +154,18 @@ export async function POST(request: NextRequest) {
 
         const { data: existente } = await supabase
           .from("access_sync")
-          .select("id_transacao")
+          .select("id_transacao, data_liberacao")
           .eq("email", email)
           .eq("plano", plano)
           .maybeSingle();
         const jaProcessado = (existente as any)?.id_transacao === idTransacao;
+
+        // Idempotência: se já processamos essa transação antes (reenvio
+        // de webhook), preserva a data_liberacao ORIGINAL em vez de
+        // sobrescrever com a data de hoje a cada retry.
+        const dataLiberacao = jaProcessado && (existente as any)?.data_liberacao
+          ? (existente as any).data_liberacao
+          : new Date().toISOString().split("T")[0];
 
         const { error: upsertError } = await supabase.from("access_sync").upsert(
           {
@@ -166,7 +173,7 @@ export async function POST(request: NextRequest) {
             nome,
             plano,
             ativo: true,
-            data_liberacao: new Date().toISOString().split("T")[0],
+            data_liberacao: dataLiberacao,
             origem: "mercadopago",
             id_transacao: idTransacao,
           },
@@ -201,6 +208,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Idempotência: se esse pagamento JÁ estava aprovado antes desse
+    // webhook (ex: Mercado Pago reenviando a notificação, que é
+    // comportamento normal e esperado de webhook), não deve estender o
+    // plano de novo. Sem essa checagem, cada reenvio empurraria
+    // plan_expires_at mais 30/365 dias a partir de "agora", dando dias
+    // extras de graça pro aluno a cada retry.
+    const jaEstavaAprovado = (paymentRecord as any).status === "approved";
+
     // Update payment status
     await supabase
       .from("pagamentos")
@@ -213,8 +228,9 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", (paymentRecord as any).id);
 
-    // If payment approved, activate user subscription
-    if (payment.status === "approved") {
+    // If payment approved, activate user subscription — só na primeira
+    // vez que esse pagamento específico transiciona pra "approved".
+    if (payment.status === "approved" && !jaEstavaAprovado) {
       const planExpiresAt =
         (paymentRecord as any).plano === "annual"
           ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)

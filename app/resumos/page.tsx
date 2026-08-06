@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FileText, Crown } from "lucide-react";
 import Link from "next/link";
@@ -19,24 +18,21 @@ const fadeInUp = {
 };
 
 export default function ResumosPage() {
-  return (
-    <Suspense fallback={null}>
-      <ResumosContent />
-    </Suspense>
-  );
-}
-
-function ResumosContent() {
   useAuth(true);
   const { isPremium } = useAuthStore();
-  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [ciclo, setCiclo] = useState("todos");
-  // Deep-link vindo do menu lateral (clicar numa disciplina real
-  // leva pra cá já filtrado, em vez de uma rota /[slug] que não existe).
-  const [disciplina, setDisciplina] = useState(
-    searchParams.get("disciplina") || "todas",
-  );
+  const [disciplina, setDisciplina] = useState("todas");
+
+  // Deep-link vindo do menu lateral (clicar numa disciplina real leva
+  // pra cá já filtrado). Lido direto de window.location em vez de
+  // useSearchParams() -- evita a exigencia de <Suspense> do Next.js
+  // pra esse hook, que estava deixando a pagina em branco.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const disciplinaUrl = params.get("disciplina");
+    if (disciplinaUrl) setDisciplina(disciplinaUrl);
+  }, []);
 
   const { contents, isLoading } = useContentList({ tipo: "resumo" });
 

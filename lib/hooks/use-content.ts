@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/lib/auth-store";
 import type { Content, Questao } from "@/types";
 
 interface UseContentListOptions {
@@ -13,6 +14,7 @@ interface UseContentListOptions {
 }
 
 export function useContentList(options: UseContentListOptions = {}) {
+  const { user } = useAuthStore();
   const [contents, setContents] = useState<Content[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +37,39 @@ export function useContentList(options: UseContentListOptions = {}) {
 
       if (fetchError) throw fetchError;
 
-      let result = (data || []) as Content[];
+      let result = (data || []) as Array<Content & { professor?: string | null; semestre?: string | null }>;
       if (options.premium !== undefined) {
         result = result.filter((c) => c.premium === options.premium);
       }
-      setContents(result);
+
+      // Combo Personalizado: itens sem `professor` aparecem sempre (disciplina
+      // com 1 versão só). Itens COM `professor` só aparecem se baterem com a
+      // escolha do aluno pra essa disciplina+semestre -- assim a biblioteca
+      // nunca mostra duas versões duplicadas da mesma matéria.
+      const temItemComProfessor = result.some((c) => c.professor);
+      if (temItemComProfessor) {
+        const escolhasMap: Record<string, string> = {};
+        if (user) {
+          const { data: escolhasData } = await supabase
+            .from("professor_escolhas")
+            .select("semestre, disciplina, professor")
+            .eq("user_id", user.id);
+          for (const e of (escolhasData || []) as Array<{
+            semestre: string;
+            disciplina: string;
+            professor: string;
+          }>) {
+            escolhasMap[`${e.semestre}::${e.disciplina}`] = e.professor;
+          }
+        }
+        result = result.filter((c) => {
+          if (!c.professor) return true;
+          const escolhido = escolhasMap[`${c.semestre}::${c.disciplina}`];
+          return escolhido === c.professor;
+        });
+      }
+
+      setContents(result as Content[]);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erro ao carregar conteudos",
@@ -47,7 +77,7 @@ export function useContentList(options: UseContentListOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [options]);
+  }, [options, user]);
 
   useEffect(() => {
     fetchContents();

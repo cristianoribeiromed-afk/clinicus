@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/auth-store";
+import { supabase } from "@/lib/supabase";
 import { PLANOS } from "@/lib/config";
 import { useToast } from "@/hooks/use-toast";
 
@@ -56,9 +57,18 @@ function CheckoutContent() {
 
     setIsLoading(true);
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        },
         body: JSON.stringify({
           plan_id: plan.id,
           user_id: profile.id,

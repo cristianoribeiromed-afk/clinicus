@@ -23,7 +23,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DISCIPLINAS, APP_CONFIG } from "@/lib/config";
+import { APP_CONFIG } from "@/lib/config";
+import { useDisciplinasReais } from "@/lib/hooks/use-disciplinas";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/dashboard" },
@@ -41,13 +42,6 @@ export function Sidebar() {
   const visibleMenuItems = isAdmin
     ? [...menuItems, { icon: Shield, label: "Admin", href: "/admin" }]
     : menuItems;
-  const [expandedCiclo, setExpandedCiclo] = useState<
-    "básico" | "clínico" | null
-  >(null);
-
-  const disciplinasbásico = DISCIPLINAS.filter((d) => d.ciclo === "básico");
-  const disciplinasclínico = DISCIPLINAS.filter((d) => d.ciclo === "clínico");
-
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen bg-background border-r border-border glass">
       {/* Logo */}
@@ -111,99 +105,9 @@ export function Sidebar() {
           );
         })}
 
-        {/* Ciclo Básico */}
-        <div className="pt-4">
-          <button
-            onClick={() =>
-              setExpandedCiclo(expandedCiclo === "básico" ? null : "básico")
-            }
-            className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              Ciclo básico
-            </span>
-            <ChevronDown
-              className={cn(
-                "w-4 h-4 transition-transform",
-                expandedCiclo === "básico" && "rotate-180",
-              )}
-            />
-          </button>
-          {expandedCiclo === "básico" && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              className="mt-1 space-y-0.5 pl-2"
-            >
-              {disciplinasbásico.slice(0, 6).map((disc) => (
-                <Link
-                  key={disc.slug}
-                  href={`/${disc.slug}`}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all",
-                    pathname === `/${disc.slug}`
-                      ? "bg-card text-foreground"
-                      : "text-muted-foreground hover:bg-card hover:text-foreground",
-                  )}
-                >
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: disc.color }}
-                  />
-                  {disc.name}
-                </Link>
-              ))}
-            </motion.div>
-          )}
-        </div>
-
-        {/* Ciclo Clínico */}
-        <div className="pt-2">
-          <button
-            onClick={() =>
-              setExpandedCiclo(expandedCiclo === "clínico" ? null : "clínico")
-            }
-            className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              <Stethoscope className="w-4 h-4" />
-              Ciclo clínico
-            </span>
-            <ChevronDown
-              className={cn(
-                "w-4 h-4 transition-transform",
-                expandedCiclo === "clínico" && "rotate-180",
-              )}
-            />
-          </button>
-          {expandedCiclo === "clínico" && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              className="mt-1 space-y-0.5 pl-2"
-            >
-              {disciplinasclínico.map((disc) => (
-                <Link
-                  key={disc.slug}
-                  href={`/${disc.slug}`}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all",
-                    pathname === `/${disc.slug}`
-                      ? "bg-card text-foreground"
-                      : "text-muted-foreground hover:bg-card hover:text-foreground",
-                  )}
-                >
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: disc.color }}
-                  />
-                  {disc.name}
-                </Link>
-              ))}
-            </motion.div>
-          )}
-        </div>
+        {/* Disciplinas reais, agrupadas por semestre — substitui a lista
+            fabricada de 72 matérias do template. Ver IDENTIDADE_CLINICUS.md */}
+        <SemestresReais pathname={pathname} />
       </nav>
 
       {/* Upgrade CTA for free users */}
@@ -381,5 +285,76 @@ export function BottomNav() {
         })}
       </div>
     </nav>
+  );
+}
+
+/**
+ * Navegação real: Semestre → Matéria, vinda do catálogo de verdade
+ * (tabela `conteudos`, 275 itens importados do ClinicusMed) -- não
+ * mais a lista de 72 matérias fabricadas pelo template.
+ * Ver IDENTIDADE_CLINICUS.md.
+ */
+function SemestresReais({ pathname }: { pathname: string }) {
+  const { semestres, isLoading } = useDisciplinasReais();
+  const [expandido, setExpandido] = useState<string | null>(
+    semestres[0]?.semestre ?? null,
+  );
+
+  if (isLoading) {
+    return (
+      <div className="pt-4 px-3 space-y-2">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-4 w-24 bg-muted rounded animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {semestres.map((sem) => {
+        const aberto = expandido === sem.semestre;
+        return (
+          <div key={sem.semestre} className="pt-2">
+            <button
+              onClick={() => setExpandido(aberto ? null : sem.semestre)}
+              className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                {sem.numero}º Semestre
+              </span>
+              <ChevronDown
+                className={cn(
+                  "w-4 h-4 transition-transform",
+                  aberto && "rotate-180",
+                )}
+              />
+            </button>
+            {aberto && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                className="mt-1 space-y-0.5 pl-2"
+              >
+                {sem.disciplinas.map((d) => {
+                  const href = `/resumos?disciplina=${encodeURIComponent(d.disciplina)}`;
+                  return (
+                    <Link
+                      key={d.disciplina}
+                      href={href}
+                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-card hover:text-foreground transition-all"
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0" />
+                      <span className="truncate">{d.disciplina}</span>
+                    </Link>
+                  );
+                })}
+              </motion.div>
+            )}
+          </div>
+        );
+      })}
+    </>
   );
 }

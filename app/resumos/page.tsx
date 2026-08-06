@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { FileText, Crown } from "lucide-react";
 import Link from "next/link";
@@ -18,11 +19,24 @@ const fadeInUp = {
 };
 
 export default function ResumosPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResumosContent />
+    </Suspense>
+  );
+}
+
+function ResumosContent() {
   useAuth(true);
   const { isPremium } = useAuthStore();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [ciclo, setCiclo] = useState("todos");
-  const [disciplina, setDisciplina] = useState("todas");
+  // Deep-link vindo do menu lateral (clicar numa disciplina real
+  // leva pra cá já filtrado, em vez de uma rota /[slug] que não existe).
+  const [disciplina, setDisciplina] = useState(
+    searchParams.get("disciplina") || "todas",
+  );
 
   const { contents, isLoading } = useContentList({ tipo: "resumo" });
 

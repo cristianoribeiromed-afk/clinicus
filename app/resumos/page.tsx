@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { FileText, Crown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, Crown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ContentCard, ContentCardSkeleton } from "@/components/ui/content-card";
@@ -23,11 +23,11 @@ export default function ResumosPage() {
   const [search, setSearch] = useState("");
   const [ciclo, setCiclo] = useState("todos");
   const [disciplina, setDisciplina] = useState("todas");
+  // Qual semestre está aberto (accordion) -- só 1 por vez, o resto fica
+  // fechado. Resolve a queixa de "muita coisa misturada, tem que rolar
+  // demais": agora só o que interessa no momento fica visível.
+  const [semestreAberto, setSemestreAberto] = useState<string | null>(null);
 
-  // Deep-link vindo do menu lateral (clicar numa disciplina real leva
-  // pra cá já filtrado). Lido direto de window.location em vez de
-  // useSearchParams() -- evita a exigencia de <Suspense> do Next.js
-  // pra esse hook, que estava deixando a pagina em branco.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const disciplinaUrl = params.get("disciplina");
@@ -44,13 +44,6 @@ export default function ResumosPage() {
     return true;
   });
 
-  const disciplinasDisponiveis = Array.from(
-    new Set(contents.map((c) => c.disciplina)),
-  );
-
-  // Agrupa Semestre -> Matéria, na mesma lógica do Sidebar (ver
-  // IDENTIDADE_CLINICUS.md: navegação segue a lógica real da Clinicus,
-  // não uma lista plana de "produtos" misturados).
   const agrupado = filteredContents.reduce<
     Record<string, Record<string, typeof filteredContents>>
   >((acc, item) => {
@@ -68,51 +61,44 @@ export default function ResumosPage() {
     return numA - numB;
   });
 
+  // Abre automaticamente o semestre certo: se veio de um link de
+  // disciplina específica (menu lateral), abre o semestre dessa
+  // disciplina. Senão, abre o primeiro semestre que tem conteúdo.
+  useEffect(() => {
+    if (semestreAberto !== null || semestresOrdenados.length === 0) return;
+    if (disciplina !== "todas") {
+      const semDaDisciplina = semestresOrdenados.find((sem) =>
+        Object.keys(agrupado[sem]).includes(disciplina),
+      );
+      setSemestreAberto(semDaDisciplina || semestresOrdenados[0]);
+    } else {
+      setSemestreAberto(semestresOrdenados[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semestresOrdenados.join(","), disciplina]);
+
   return (
     <AppLayout>
-      <div className="p-4 lg:p-8 space-y-6">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeInUp}
-          className="space-y-2"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <FileText className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold">Resumos</h1>
-              <p className="text-muted-foreground">
-                Conteudo organizado por disciplina com linguagem simplificada
-              </p>
-            </div>
+      <div className="p-4 lg:p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-blue-500/20">
+            <FileText className="w-5 h-5 text-blue-400" />
           </div>
-        </motion.div>
+          <h1 className="text-xl lg:text-2xl font-bold">Resumos</h1>
+        </div>
 
         {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="p-4 rounded-xl bg-secondary/10 border border-secondary/20"
-          >
-            <div className="flex items-center gap-3">
-              <Crown className="w-5 h-5 text-secondary" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">
-                  Desbloqueie todos os resumos
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Plano Free inclui 2 resumos por disciplina
-                </p>
-              </div>
-              <Link href="/planos">
-                <Button size="sm" variant="secondary">
-                  Ver Planos
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+          <div className="p-3 rounded-xl bg-secondary/10 border border-secondary/20 flex items-center gap-3">
+            <Crown className="w-4 h-4 text-secondary flex-shrink-0" />
+            <p className="text-xs flex-1">
+              Plano Free inclui 2 resumos por disciplina.
+            </p>
+            <Link href="/planos">
+              <Button size="sm" variant="secondary" className="h-7 text-xs">
+                Ver Planos
+              </Button>
+            </Link>
+          </div>
         )}
 
         <FilterBar
@@ -139,40 +125,68 @@ export default function ResumosPage() {
             ))}
           </div>
         ) : filteredContents.length > 0 ? (
-          <div className="space-y-10">
-            {semestresOrdenados.map((sem) => (
-              <div key={sem} className="space-y-6">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm">
-                    {sem.replace("semestre-", "").replace(/^0/, "")}
-                  </span>
-                  {sem.replace("semestre-", "")}º Semestre
-                </h2>
-                {Object.keys(agrupado[sem])
-                  .sort((a, b) => a.localeCompare(b, "pt-BR"))
-                  .map((disc) => (
-                    <div key={disc} className="space-y-3 pl-2">
-                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        {disc}
-                      </h3>
+          <div className="space-y-3">
+            {semestresOrdenados.map((sem) => {
+              const aberto = semestreAberto === sem;
+              const totalItens = Object.values(agrupado[sem]).flat().length;
+              return (
+                <div
+                  key={sem}
+                  className="rounded-xl border border-border overflow-hidden"
+                >
+                  <button
+                    onClick={() => setSemestreAberto(aberto ? null : sem)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-card hover:bg-card/80 transition-colors"
+                  >
+                    <span className="flex items-center gap-2 font-semibold">
+                      <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm flex-shrink-0">
+                        {sem.replace("semestre-", "").replace(/^0/, "")}
+                      </span>
+                      {sem.replace("semestre-", "")}º Semestre
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({totalItens} {totalItens === 1 ? "item" : "itens"})
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-muted-foreground transition-transform ${aberto ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {aberto && (
                       <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={{
-                          visible: { transition: { staggerChildren: 0.03 } },
-                        }}
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
                       >
-                        {agrupado[sem][disc].map((content) => (
-                          <motion.div key={content.id} variants={fadeInUp}>
-                            <ContentCard content={content} showDescription />
-                          </motion.div>
-                        ))}
+                        <div className="p-4 space-y-6 bg-background/40">
+                          {Object.keys(agrupado[sem])
+                            .sort((a, b) => a.localeCompare(b, "pt-BR"))
+                            .map((disc) => (
+                              <div key={disc} className="space-y-3">
+                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                  {disc}
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                  {agrupado[sem][disc].map((content) => (
+                                    <ContentCard
+                                      key={content.id}
+                                      content={content}
+                                      showDescription
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
                       </motion.div>
-                    </div>
-                  ))}
-              </div>
-            ))}
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="p-12 text-center rounded-xl bg-card border border-border">

@@ -19,7 +19,6 @@ import {
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
-import { DisciplinaCard } from "@/components/ui/disciplina-card";
 import { PlanCard } from "@/components/ui/plan-card";
 import { StatCard } from "@/components/ui/stats-card";
 import {
@@ -28,7 +27,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { DISCIPLINAS, PLANOS, CONTENT_STATS } from "@/lib/config";
+import { PLANOS, CONTENT_STATS } from "@/lib/config";
+import { useDisciplinasReais } from "@/lib/hooks/use-disciplinas";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -44,6 +44,9 @@ const staggerContainer = {
 };
 
 export default function LandingPage() {
+  const { semestres: semestresReais } = useDisciplinasReais();
+  const disciplinasReais = semestresReais.flatMap((s) => s.disciplinas);
+
   return (
     <>
       <Header />
@@ -308,7 +311,7 @@ export default function LandingPage() {
 
             <div className="mb-12">
               <h3 className="text-xl font-semibold mb-6 text-center md:text-left">
-                Ciclo básico
+                Disciplinas disponíveis
               </h3>
               <motion.div
                 initial="hidden"
@@ -317,36 +320,17 @@ export default function LandingPage() {
                 variants={staggerContainer}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               >
-                {DISCIPLINAS.filter((d) => d.ciclo === "básico").map((disc) => (
-                  <DisciplinaCard
-                    key={disc.slug}
-                    disciplina={disc}
-                    contentCount={12}
-                  />
+                {disciplinasReais.map((disc) => (
+                  <div
+                    key={`${disc.semestre}-${disc.disciplina}`}
+                    className="bg-card rounded-xl border border-border p-4"
+                  >
+                    <p className="font-semibold truncate">{disc.disciplina}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {disc.semestre.replace("semestre-", "")}º semestre
+                    </p>
+                  </div>
                 ))}
-              </motion.div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-6 text-center md:text-left">
-                Ciclo clínico
-              </h3>
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={staggerContainer}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-              >
-                {DISCIPLINAS.filter((d) => d.ciclo === "clínico").map(
-                  (disc) => (
-                    <DisciplinaCard
-                      key={disc.slug}
-                      disciplina={disc}
-                      contentCount={8}
-                    />
-                  ),
-                )}
               </motion.div>
             </div>
           </div>

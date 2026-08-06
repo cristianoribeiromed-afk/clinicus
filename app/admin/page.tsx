@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 type Toast = { type: 'success' | 'error'; message: string } | null;
-type ContentType = 'resumo' | 'simulado' | 'caso_clínico';
+type ContentType = 'resumo' | 'simulado' | 'caso_clinico';
 type CycleType = 'basico' | 'clinico';
 type Difficulty = 'facil' | 'medio' | 'dificil';
 
@@ -158,8 +158,8 @@ function ContentForm({ initial, onSuccess, onCancel }: {
         conteudo_html: form.tipo === 'resumo' ? form.conteudo_html : null,
         file_url: form.tipo === 'resumo' ? form.file_url || null : null,
         tempo_por_questao: form.tipo === 'simulado' ? form.tempo_por_questao : null,
-        questoes: ['simulado', 'caso_clínico'].includes(form.tipo) ? form.questoes : [],
-        vinheta: form.tipo === 'caso_clínico' ? form.vinheta : null,
+        questoes: ['simulado', 'caso_clinico'].includes(form.tipo) ? form.questoes : [],
+        vinheta: form.tipo === 'caso_clinico' ? form.vinheta : null,
       };
       const url = initial ? `/api/admin/conteudos/${initial.id}` : '/api/admin/conteudos';
       const method = initial ? 'PUT' : 'POST';
@@ -195,7 +195,7 @@ function ContentForm({ initial, onSuccess, onCancel }: {
           {([
             { value: 'resumo', label: 'Resumo', icon: FileText },
             { value: 'simulado', label: 'Simulado', icon: Brain },
-            { value: 'caso_clínico', label: 'Caso Clínico', icon: Stethoscope },
+            { value: 'caso_clinico', label: 'Caso Clínico', icon: Stethoscope },
           ] as const).map(({ value, label, icon: Icon }) => (
             <button key={value} type="button" onClick={() => set('tipo', value)}
               className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 text-sm font-medium ${form.tipo === value ? 'border-primary bg-primary/10 text-primary' : 'border-muted'}`}>
@@ -278,7 +278,7 @@ function ContentForm({ initial, onSuccess, onCancel }: {
           ))}
         </div>
       )}
-      {form.tipo === 'caso_clínico' && (
+      {form.tipo === 'caso_clinico' && (
         <div className="space-y-4">
           <div>
             <Label>Vinheta Clínica *</Label>
@@ -376,18 +376,18 @@ export default function AdminPage() {
     total: contents.length,
     resumos: contents.filter((c) => c.tipo === 'resumo').length,
     simulados: contents.filter((c) => c.tipo === 'simulado').length,
-    casos: contents.filter((c) => c.tipo === 'caso_clínico').length,
+    casos: contents.filter((c) => c.tipo === 'caso_clinico').length,
     premium: contents.filter((c) => c.premium).length,
   };
 
   const tipoBadge: Record<string, string> = {
     resumo: 'bg-blue-100 text-blue-700',
     simulado: 'bg-purple-100 text-purple-700',
-    'caso_clínico': 'bg-emerald-100 text-emerald-700',
+    'caso_clinico': 'bg-emerald-100 text-emerald-700',
   };
 
   const tipoLabel: Record<string, string> = {
-    resumo: 'Resumo', simulado: 'Simulado', 'caso_clínico': 'Caso Clínico',
+    resumo: 'Resumo', simulado: 'Simulado', 'caso_clinico': 'Caso Clínico',
   };
 
   if (isLoading || isAdmin === null) {
@@ -438,7 +438,7 @@ export default function AdminPage() {
               <SelectItem value="todos">Todos os tipos</SelectItem>
               <SelectItem value="resumo">Resumos</SelectItem>
               <SelectItem value="simulado">Simulados</SelectItem>
-              <SelectItem value="caso_clínico">Casos Clínicos</SelectItem>
+              <SelectItem value="caso_clinico">Casos Clínicos</SelectItem>
             </SelectContent>
           </Select>
           {(filterTipo !== 'todos' || search) && (

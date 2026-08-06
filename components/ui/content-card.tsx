@@ -16,19 +16,19 @@ interface ContentCardProps {
 const typeIcons: Record<ContentType, typeof Brain> = {
   resumo: FileText,
   simulado: Brain,
-  caso_clínico: Heart,
+  caso_clinico: Heart,
 };
 
 const typeLabels: Record<ContentType, string> = {
   resumo: "Resumo",
   simulado: "Simulado",
-  caso_clínico: "Caso clínico",
+  caso_clinico: "Caso clínico",
 };
 
 const typeColors: Record<ContentType, string> = {
   resumo: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   simulado: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  caso_clínico: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+  caso_clinico: "bg-rose-500/20 text-rose-400 border-rose-500/30",
 };
 
 export function ContentCard({
@@ -45,7 +45,7 @@ export function ContentCard({
         return `/resumos/${content.id}`;
       case "simulado":
         return `/simulados/${content.id}`;
-      case "caso_clínico":
+      case "caso_clinico":
         return `/casos/${content.id}`;
       default:
         return "#";

@@ -25,7 +25,7 @@ export interface DisciplineProgress {
 }
 
 // Content types
-export type ContentType = "resumo" | "simulado" | "caso_clínico";
+export type ContentType = "resumo" | "simulado" | "caso_clinico";
 export type Difficulty = "facil" | "medio" | "dificil";
 export type CycleType = "básico" | "clínico" | "pré-clínico";
 // Valores realmente aceitos pela coluna `ciclo` da tabela conteudos no banco (sem acento).

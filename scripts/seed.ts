@@ -215,7 +215,7 @@ const SIMULADO_MICROBIOLOGIA_2 = {
 
 const CASO_clínico_CARDIOLOGIA_1 = {
   id: "caso-cardio-1",
-  tipo: "caso_clínico" as const,
+  tipo: "caso_clinico" as const,
   titulo: "Homem de 55 anos com dor toracica opressiva",
   disciplina: "cardiologia",
   ciclo: "clínico" as const,
@@ -267,7 +267,7 @@ iniciada ha 2 horas em repouso. Negica dispneia. PA: 160/100 mmHg; FC: 98 bpm; S
 
 const CASO_clínico_CARDIOLOGIA_2 = {
   id: "caso-cardio-2",
-  tipo: "caso_clínico" as const,
+  tipo: "caso_clinico" as const,
   titulo: "Mulher de 28 anos com dispneia progressiva e edema de MMII",
   disciplina: "cardiologia",
   ciclo: "clínico" as const,

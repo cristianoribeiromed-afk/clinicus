@@ -23,7 +23,7 @@ export default function CasosPage() {
   const [search, setSearch] = useState("");
   const [ciclo, setCiclo] = useState("todos");
 
-  const { contents, isLoading } = useContentList({ tipo: "caso_clínico" });
+  const { contents, isLoading } = useContentList({ tipo: "caso_clinico" });
 
   const filteredContents = contents.filter((c) => {
     if (search && !c.titulo.toLowerCase().includes(search.toLowerCase()))
@@ -86,8 +86,8 @@ export default function CasosPage() {
               onChange: setCiclo,
               options: [
                 { value: "todos", label: "Todos os Ciclos" },
-                { value: "básico", label: "Ciclo básico" },
-                { value: "clínico", label: "Ciclo clínico" },
+                { value: "basico", label: "Ciclo básico" },
+                { value: "clinico", label: "Ciclo clínico" },
               ],
             },
           }}

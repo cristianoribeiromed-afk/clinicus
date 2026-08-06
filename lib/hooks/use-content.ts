@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import type { Content, Questao } from "@/types";
 
 interface UseContentListOptions {
-  tipo?: "resumo" | "simulado" | "caso_clínico";
+  tipo?: "resumo" | "simulado" | "caso_clinico";
   disciplina?: string;
   ciclo?: "básico" | "clínico";
   premium?: boolean;

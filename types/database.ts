@@ -58,7 +58,7 @@ export interface Database {
       conteúdos: {
         Row: {
           id: string;
-          tipo: "resumo" | "simulado" | "caso_clínico";
+          tipo: "resumo" | "simulado" | "caso_clinico";
           titulo: string;
           disciplina: string;
           ciclo: "basico" | "clinico";
@@ -77,7 +77,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          tipo: "resumo" | "simulado" | "caso_clínico";
+          tipo: "resumo" | "simulado" | "caso_clinico";
           titulo: string;
           disciplina: string;
           ciclo: "basico" | "clinico";
@@ -95,7 +95,7 @@ export interface Database {
           exames?: Json;
         };
         Update: {
-          tipo?: "resumo" | "simulado" | "caso_clínico";
+          tipo?: "resumo" | "simulado" | "caso_clinico";
           titulo?: string;
           disciplina?: string;
           ciclo?: "basico" | "clinico";
@@ -175,7 +175,7 @@ export interface Database {
     Functions: Record<string, never>;
     Enums: {
       plan_type: "free" | "monthly" | "annual";
-      content_type: "resumo" | "simulado" | "caso_clínico";
+      content_type: "resumo" | "simulado" | "caso_clinico";
       cycle_type: "basico" | "clinico";
       payment_status: "pending" | "approved" | "rejected" | "cancelled";
       payment_method: "pix" | "credit_card";

@@ -77,8 +77,8 @@ export default function SimuladosPage() {
               onChange: setCiclo,
               options: [
                 { value: "todos", label: "Todos os Ciclos" },
-                { value: "básico", label: "Ciclo básico" },
-                { value: "clínico", label: "Ciclo clínico" },
+                { value: "basico", label: "Ciclo básico" },
+                { value: "clinico", label: "Ciclo clínico" },
               ],
             },
             sort: {

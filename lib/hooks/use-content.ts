@@ -87,7 +87,14 @@ export function useContentList(options: UseContentListOptions = {}) {
       logLoadingFim("useContentList");
       setLoading(false);
     }
-  }, [options, user]);
+  }, [
+    options.tipo,
+    options.disciplina,
+    options.ciclo,
+    options.premium,
+    options.limit,
+    user,
+  ]);
 
   useEffect(() => {
     fetchContents();

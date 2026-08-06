@@ -69,7 +69,7 @@ export function Sidebar() {
             <Avatar>
               <AvatarImage src={profile.photo_url || undefined} />
               <AvatarFallback className="bg-primary text-white">
-                {profile.name.charAt(0).toUpperCase()}
+                {(profile.name || profile.email || "?").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
@@ -331,7 +331,7 @@ export function MobileSidebar() {
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={profile.photo_url || undefined} />
                     <AvatarFallback className="bg-primary text-white">
-                      {profile.name.charAt(0).toUpperCase()}
+                      {(profile.name || profile.email || "?").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>

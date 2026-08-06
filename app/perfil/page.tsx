@@ -64,7 +64,7 @@ export default function PerfilPage() {
               <Avatar className="w-24 h-24 border-4 border-background">
                 <AvatarImage src={profile.photo_url || undefined} />
                 <AvatarFallback className="bg-primary text-white text-3xl">
-                  {profile.name.charAt(0).toUpperCase()}
+                  {(profile.name || profile.email || "?").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">

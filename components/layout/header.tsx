@@ -83,11 +83,11 @@ export function Header() {
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={profile.photo_url || undefined} />
                       <AvatarFallback className="bg-primary text-white text-xs">
-                        {profile.name.charAt(0).toUpperCase()}
+                        {(profile.name || profile.email || "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm hidden sm:block">
-                      {profile.name.split(" ")[0]}
+                      {(profile.name || profile.email || "Usuário").split(" ")[0]}
                     </span>
                   </button>
                 </DropdownMenuTrigger>
@@ -177,7 +177,7 @@ export function DashboardHeader() {
       <div className="flex items-center justify-between h-16 px-4">
         <div>
           <p className="text-xs text-muted-foreground">{getGreeting()}</p>
-          <p className="font-semibold">{profile?.name.split(" ")[0]}</p>
+          <p className="font-semibold">{(profile?.name || profile?.email || "Usuário").split(" ")[0]}</p>
         </div>
         <div className="flex items-center gap-2">
           {!isPremium && (
@@ -192,7 +192,7 @@ export function DashboardHeader() {
           <Avatar className="w-8 h-8">
             <AvatarImage src={profile?.photo_url || undefined} />
             <AvatarFallback className="bg-primary text-white text-xs">
-              {profile?.name.charAt(0).toUpperCase()}
+              {(profile?.name || profile?.email || "?").charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </div>

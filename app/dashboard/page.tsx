@@ -1,82 +1,129 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Brain,
-  FileText,
-  Heart,
-  Clock,
-  TrendingUp,
-  Calendar,
-  Flame,
-  BookOpen,
-  ArrowRight,
-  Crown,
-} from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { AppLayout } from "@/components/layout/app-layout";
-import { ContentCard, ContentCardSkeleton } from "@/components/ui/content-card";
-import { ProgressBar, StreakIndicator } from "@/components/ui/stats-card";
-import { useAuth } from "@/lib/hooks/use-auth";
-import { useContentList } from "@/lib/hooks/use-content";
-import { useAuthStore } from "@/lib/auth-store";
-import { useDisciplinasReais } from "@/lib/hooks/use-disciplinas";
-import { Button } from "@/components/ui/button";
-import type { Content } from "@/types";
+import { BookOpen, FileText, Stethoscope } from "lucide-react";
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
+/**
+ * Dashboard reescrito do zero (ver conversa: várias tentativas de
+ * corrigir a versão anterior não resolveram uma tela em branco
+ * persistente, sem erro visível nem no console nem no Error Boundary).
+ *
+ * Princípios dessa versão, todos deliberados:
+ * 1. Autenticação verificada AQUI DENTRO, direto, sem depender da
+ *    cadeia de hooks compartilhados (useAuth -> useAuthStore ->
+ *    persist -> ...) que pode ter algum ponto de falha silenciosa
+ *    ainda não identificado.
+ * 2. Todo estado (carregando / erro / vazio / com dado) tem uma
+ *    UI DISTINTA E VISÍVEL -- nunca um "esqueleto" com cor parecida
+ *    com o fundo, que pode parecer tela em branco por engano.
+ * 3. Um console.log de cada etapa -- fácil de (I) confirmar que o
+ *    componente pelo menos MONTOU, e (II) ver exatamente onde parou,
+ *    se parar.
+ */
+
+interface DashboardData {
+  nome: string;
+  email: string;
+  plano: string;
+}
 
 export default function DashboardPage() {
-  const { user, profile, isLoading: authLoading, initError } = useAuth(true);
-  const { isPremium } = useAuthStore();
-  const { contents: recentContent, isLoading: contentLoading } = useContentList(
-    { limit: 4 },
+  const router = useRouter();
+  const [status, setStatus] = useState<"carregando" | "erro" | "pronto">(
+    "carregando",
   );
-  const { semestres: semestresReais } = useDisciplinasReais();
-  const disciplinasReais = semestresReais.flatMap((s) => s.disciplinas);
+  const [erro, setErro] = useState<string>("");
+  const [dados, setDados] = useState<DashboardData | null>(null);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
-    return "Boa noite";
-  };
+  useEffect(() => {
+    console.log("[Dashboard] montou, iniciando verificação de sessão...");
+    let ativo = true;
 
-  if (initError) {
+    async function carregar() {
+      try {
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+        console.log("[Dashboard] getSession retornou:", {
+          temSessao: !!sessionData?.session,
+          erro: sessionError,
+        });
+
+        if (sessionError) throw sessionError;
+
+        if (!sessionData?.session) {
+          console.log("[Dashboard] sem sessão, redirecionando pro login");
+          if (ativo) router.push("/login");
+          return;
+        }
+
+        const userId = sessionData.session.user.id;
+        const { data: userRow, error: userError } = await supabase
+          .from("users")
+          .select("name, email, plan")
+          .eq("id", userId)
+          .maybeSingle();
+
+        console.log("[Dashboard] busca de perfil retornou:", {
+          userRow,
+          userError,
+        });
+
+        if (userError) throw userError;
+
+        if (ativo) {
+          setDados({
+            nome: (userRow as any)?.name || sessionData.session.user.email || "Aluno",
+            email: sessionData.session.user.email || "",
+            plano: (userRow as any)?.plan || "free",
+          });
+          setStatus("pronto");
+        }
+      } catch (err) {
+        console.error("[Dashboard] erro ao carregar:", err);
+        if (ativo) {
+          setErro(err instanceof Error ? err.message : "Erro desconhecido ao carregar o dashboard.");
+          setStatus("erro");
+        }
+      }
+    }
+
+    carregar();
+
+    return () => {
+      ativo = false;
+    };
+  }, [router]);
+
+  if (status === "carregando") {
     return (
       <AppLayout>
-        <div className="p-4 lg:p-8 flex items-center justify-center min-h-[60vh]">
-          <div className="max-w-md text-center space-y-3">
-            <p className="text-sm text-destructive font-medium">{initError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-sm underline text-muted-foreground hover:text-foreground"
-            >
-              Recarregar página
-            </button>
-          </div>
+        <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Carregando sua jornada...</p>
         </div>
       </AppLayout>
     );
   }
 
-  if (authLoading) {
+  if (status === "erro") {
     return (
       <AppLayout>
-        <div className="p-4 lg:p-8 space-y-6">
-          <div className="h-24 bg-card rounded-2xl animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-card rounded-xl animate-pulse" />
-            ))}
+        <div className="p-8 flex items-center justify-center min-h-[60vh]">
+          <div className="max-w-md text-center space-y-4 bg-card border border-destructive/30 rounded-xl p-6">
+            <p className="text-base font-semibold text-destructive">
+              Não foi possível carregar o dashboard
+            </p>
+            <p className="text-sm text-muted-foreground">{erro}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+            >
+              Tentar de novo
+            </button>
           </div>
         </div>
       </AppLayout>
@@ -86,270 +133,53 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="p-4 lg:p-8 space-y-8">
-        {/* Header */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeInUp}
-          className="space-y-4"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold">
-                {getGreeting()}, {profile?.name?.split(" ")[0] || user?.email?.split("@")[0] || "Aluno"}!
-              </h1>
-              <p className="text-muted-foreground">
-                {isPremium
-                  ? "Acesso completo a todos os conteúdos"
-                  : "Continue sua jornada de estudos"}
-              </p>
-            </div>
-            {profile && <StreakIndicator days={profile.streak_days || 0} />}
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold">Olá, {dados?.nome?.split(" ")[0]} 👋</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Plano atual: <span className="capitalize">{dados?.plano}</span>
+          </p>
+        </div>
 
-          {/* Upgrade Banner for Free Users */}
-          {!isPremium && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20"
-            >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/20">
-                    <Crown className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">
-                      Desbloqueie todo o conteudo
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Acesso a todos os resumos, simulados e casos clínicos
-                    </p>
-                  </div>
-                </div>
-                <Link href="/planos">
-                  <Button className="bg-primary hover:bg-primary/90 text-white gap-2">
-                    Ver Planos
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Quick Stats */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {[
-            {
-              icon: Brain,
-              label: "Simulados Feitos",
-              value: profile?.simulados_completed?.length || 0,
-              color: "text-primary",
-            },
-            {
-              icon: FileText,
-              label: "Resumos Lidos",
-              value: 0,
-              color: "text-secondary",
-            },
-            {
-              icon: Heart,
-              label: "Casos Estudados",
-              value: 0,
-              color: "text-rose-400",
-            },
-            {
-              icon: Clock,
-              label: "Horas de Estudo",
-              value: 0,
-              color: "text-amber-400",
-            },
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              variants={fadeInUp}
-              className="p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`p-2 rounded-lg bg-card ${stat.color}`}>
-                  <stat.icon className="w-4 h-4" />
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {stat.label}
-                </span>
-              </div>
-              <p className="text-2xl font-bold">{stat.value}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Progress by Discipline */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeInUp}
-          className="space-y-4"
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              Progresso por Disciplina
-            </h2>
-            <Link
-              href="/resumos"
-              className="text-sm text-primary hover:underline"
-            >
-              Ver todas
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {disciplinasReais.length > 0 ? (
-              disciplinasReais.slice(0, 6).map((disc) => (
-                <Link
-                  key={`${disc.semestre}-${disc.disciplina}`}
-                  href={`/resumos?disciplina=${encodeURIComponent(disc.disciplina)}`}
-                  className="group block"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-card rounded-xl border border-border p-4 transition-all hover:border-primary/30"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10">
-                        <BookOpen className="w-6 h-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
-                          {disc.disciplina}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {disc.semestre.replace("semestre-", "")}º semestre
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              ))
-            ) : (
-              <div className="col-span-full p-8 text-center rounded-xl bg-card border border-border">
-                <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma disciplina disponível ainda.
-                </p>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Recent Content */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeInUp}
-          className="space-y-4"
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link
+            href="/resumos"
+            className="bg-card border border-border rounded-xl p-5 hover:border-primary/40 transition-colors flex items-center gap-4"
+          >
+            <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary" />
-              conteúdos Recentes
-            </h2>
-            <Link
-              href="/resumos"
-              className="text-sm text-primary hover:underline"
-            >
-              Ver todos
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {contentLoading ? (
-              [...Array(4)].map((_, i) => <ContentCardSkeleton key={i} />)
-            ) : recentContent && recentContent.length > 0 ? (
-              recentContent.map((content) => (
-                <ContentCard key={content.id} content={content} />
-              ))
-            ) : (
-              <div className="col-span-full p-8 text-center rounded-xl bg-card border border-border">
-                <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold mb-2">Nenhum conteudo ainda</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Explore nossos resumos, simulados e casos clínicos
-                </p>
-                <Link href="/resumos">
-                  <Button>Explorar conteúdos</Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </motion.div>
+            </div>
+            <div>
+              <p className="font-semibold">Guias de Estudo</p>
+              <p className="text-xs text-muted-foreground">Continue seus estudos</p>
+            </div>
+          </Link>
 
-        {/* Recommended Section */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeInUp}
-          className="space-y-4"
-        >
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Flame className="w-5 h-5 text-primary" />
-            Recomendados para você
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              href="/simulados"
-              className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
-            >
-              <Brain className="w-8 h-8 text-primary mb-4" />
-              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                Simulados Interativos
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Teste seus conhecimentos com Questões comentadas
-              </p>
-              <div className="flex items-center gap-2 text-sm text-primary">
-                Iniciar <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-            <Link
-              href="/casos"
-              className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
-            >
-              <Heart className="w-8 h-8 text-rose-400 mb-4" />
-              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                Casos clínicos
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Aprimore seu raciocinio clínico
-              </p>
-              <div className="flex items-center gap-2 text-sm text-primary">
-                Explorar <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-            <Link
-              href="/resumos"
-              className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
-            >
-              <FileText className="w-8 h-8 text-secondary mb-4" />
-              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                Biblioteca de Resumos
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                conteúdos organizados por disciplina
-              </p>
-              <div className="flex items-center gap-2 text-sm text-primary">
-                Ler <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-          </div>
-        </motion.div>
+          <Link
+            href="/simulados"
+            className="bg-card border border-border rounded-xl p-5 hover:border-primary/40 transition-colors flex items-center gap-4"
+          >
+            <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-semibold">Simulados</p>
+              <p className="text-xs text-muted-foreground">Teste seu conhecimento</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/casos"
+            className="bg-card border border-border rounded-xl p-5 hover:border-primary/40 transition-colors flex items-center gap-4"
+          >
+            <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Stethoscope className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-semibold">Casos Clínicos</p>
+              <p className="text-xs text-muted-foreground">Pratique raciocínio clínico</p>
+            </div>
+          </Link>
+        </div>
       </div>
     </AppLayout>
   );

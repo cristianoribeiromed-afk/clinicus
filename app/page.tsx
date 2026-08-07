@@ -321,15 +321,16 @@ export default function LandingPage() {
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               >
                 {disciplinasReais.map((disc) => (
-                  <div
+                  <Link
                     key={`${disc.semestre}-${disc.disciplina}`}
-                    className="bg-card rounded-xl border border-border p-4"
+                    href={`/resumos?disciplina=${encodeURIComponent(disc.disciplina)}`}
+                    className="bg-card rounded-xl border border-border p-4 hover:border-primary/40 transition-colors block"
                   >
                     <p className="font-semibold truncate">{disc.disciplina}</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {disc.semestre.replace("semestre-", "")}º semestre
                     </p>
-                  </div>
+                  </Link>
                 ))}
               </motion.div>
             </div>

@@ -21,8 +21,27 @@ export function useContentList(options: UseContentListOptions = {}) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchContents = useCallback(async () => {
+    // Rede de segurança: se a query travar sem nunca resolver nem rejeitar
+    // (rede lenta, RPC presa, env var errada na Vercel), força o loading a
+    // terminar em 10s com um erro visível -- em vez de deixar a tela presa
+    // num esqueleto de carregamento pra sempre (mesmo padrão já usado no
+    // useAuth pra evitar a "tela em branco").
+    let finished = false;
+    const timeoutId = setTimeout(() => {
+      if (!finished) {
+        console.error(
+          "Timeout: useContentList não respondeu em 10s. Verifique a RPC get_conteudos_preview / conexão com Supabase.",
+        );
+        setError(
+          "Não foi possível carregar o conteúdo. Verifique sua conexão e tente novamente.",
+        );
+        setLoading(false);
+      }
+    }, 10000);
+
     try {
       setLoading(true);
+      setError(null);
       // Usa a função RPC de preview (nunca traz conteudo_html/file_url/Questões),
       // por isso funciona igual pra usuário free e pago — o paywall é decidido
       // na tela a partir do campo `premium`, sem nunca baixar o conteúdo protegido.
@@ -84,6 +103,8 @@ export function useContentList(options: UseContentListOptions = {}) {
         err instanceof Error ? err.message : "Erro ao carregar conteudos",
       );
     } finally {
+      finished = true;
+      clearTimeout(timeoutId);
       logLoadingFim("useContentList");
       setLoading(false);
     }

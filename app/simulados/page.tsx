@@ -25,7 +25,7 @@ export default function SimuladosPage() {
   const [ciclo, setCiclo] = useState("todos");
   const [sort, setSort] = useState("recent");
 
-  const { contents, isLoading, error } = useContentList({ tipo: "simulado" });
+  const { contents, isLoading, error, refetch } = useContentList({ tipo: "simulado" });
 
   // Filter contents
   const filteredContents = contents
@@ -124,6 +124,13 @@ export default function SimuladosPage() {
             {[...Array(8)].map((_, i) => (
               <ContentCardSkeleton key={i} />
             ))}
+          </div>
+        ) : error ? (
+          <div className="p-12 text-center rounded-xl bg-card border border-border">
+            <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="font-semibold mb-2">Não foi possível carregar os simulados</h3>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button size="sm" onClick={() => refetch()}>Tentar novamente</Button>
           </div>
         ) : filteredContents.length > 0 ? (
           <motion.div

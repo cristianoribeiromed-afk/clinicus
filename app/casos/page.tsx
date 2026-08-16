@@ -23,7 +23,7 @@ export default function CasosPage() {
   const [search, setSearch] = useState("");
   const [ciclo, setCiclo] = useState("todos");
 
-  const { contents, isLoading } = useContentList({ tipo: "caso_clinico" });
+  const { contents, isLoading, error, refetch } = useContentList({ tipo: "caso_clinico" });
 
   const filteredContents = contents.filter((c) => {
     if (search && !c.titulo.toLowerCase().includes(search.toLowerCase()))
@@ -99,6 +99,13 @@ export default function CasosPage() {
             {[...Array(8)].map((_, i) => (
               <ContentCardSkeleton key={i} />
             ))}
+          </div>
+        ) : error ? (
+          <div className="p-12 text-center rounded-xl bg-card border border-border">
+            <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="font-semibold mb-2">Não foi possível carregar os casos</h3>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button size="sm" onClick={() => refetch()}>Tentar novamente</Button>
           </div>
         ) : filteredContents.length > 0 ? (
           <motion.div

@@ -34,7 +34,7 @@ export default function ResumosPage() {
     if (disciplinaUrl) setDisciplina(disciplinaUrl);
   }, []);
 
-  const { contents, isLoading } = useContentList({ tipo: "resumo" });
+  const { contents, isLoading, error, refetch } = useContentList({ tipo: "resumo" });
 
   const filteredContents = contents.filter((c) => {
     if (search && !c.titulo.toLowerCase().includes(search.toLowerCase()))
@@ -123,6 +123,13 @@ export default function ResumosPage() {
             {[...Array(8)].map((_, i) => (
               <ContentCardSkeleton key={i} />
             ))}
+          </div>
+        ) : error ? (
+          <div className="p-12 text-center rounded-xl bg-card border border-border">
+            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="font-semibold mb-2">Não foi possível carregar os resumos</h3>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button size="sm" onClick={() => refetch()}>Tentar novamente</Button>
           </div>
         ) : filteredContents.length > 0 ? (
           <div className="space-y-3">

@@ -18,6 +18,7 @@ import {
   Stethoscope,
   Microscope,
   Shield,
+  GraduationCap,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -26,22 +27,58 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { APP_CONFIG } from "@/lib/config";
 import { useDisciplinasReais } from "@/lib/hooks/use-disciplinas";
 
-const menuItems = [
-  { icon: Home, label: "Dashboard", href: "/dashboard" },
-  { icon: FileText, label: "Resumos", href: "/resumos" },
+// Grupo principal: como o aluno chega ao conteúdo. "Disciplinas" é a
+// vitrine (Entrega 1) -- o ponto de entrada agora, no lugar de "Resumos"
+// como link solto de primeiro nível.
+const menuPrincipal = [
+  { icon: Home, label: "Início", href: "/dashboard" },
+  { icon: GraduationCap, label: "Disciplinas", href: "/disciplinas" },
+];
+
+// "Praticar": mesmas rotas de sempre (/simulados, /casos), só agrupadas
+// visualmente -- nada mudou no destino, só na organização do menu.
+const menuPraticar = [
   { icon: Brain, label: "Simulados", href: "/simulados" },
   { icon: Heart, label: "Casos clínicos", href: "/casos" },
-  { icon: Star, label: "Favoritos", href: "/favoritos" },
-  { icon: Microscope, label: "Aulas Práticas", href: "/praticas" },
 ];
+
+// Itens que já existiam e continuam funcionando -- não removidos, só
+// deixaram de ser o primeiro nível da navegação agora que Disciplinas
+// assume esse lugar.
+const menuSecundario = [
+  { icon: FileText, label: "Resumos", href: "/resumos" },
+  { icon: Microscope, label: "Aulas Práticas", href: "/praticas" },
+  { icon: Star, label: "Favoritos", href: "/favoritos" },
+];
+
+function ItemDeMenu({
+  item,
+  pathname,
+}: {
+  item: { icon: typeof Home; label: string; href: string };
+  pathname: string;
+}) {
+  const isActive = pathname === item.href;
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+        isActive
+          ? "bg-primary/10 text-primary border border-primary/20"
+          : "text-muted-foreground hover:bg-card hover:text-foreground",
+      )}
+    >
+      <item.icon className="w-5 h-5" />
+      {item.label}
+    </Link>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
   const { profile, isPremium } = useAuthStore();
   const isAdmin = !!(profile as any)?.is_admin;
-  const visibleMenuItems = isAdmin
-    ? [...menuItems, { icon: Shield, label: "Admin", href: "/admin" }]
-    : menuItems;
   return (
     <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 flex-col w-64 h-screen bg-background border-r border-border glass">
       {/* Logo */}
@@ -86,27 +123,32 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-        {visibleMenuItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
-                isActive
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "text-muted-foreground hover:bg-card hover:text-foreground",
-              )}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </Link>
-          );
-        })}
+        {menuPrincipal.map((item) => (
+          <ItemDeMenu key={item.href} item={item} pathname={pathname} />
+        ))}
 
-        {/* Disciplinas reais, agrupadas por semestre — substitui a lista
-            fabricada de 72 matérias do template. Ver IDENTIDADE_CLINICUS.md */}
+        <p className="px-3 pt-4 pb-1 text-xs font-medium text-muted-foreground/70">
+          Praticar
+        </p>
+        {menuPraticar.map((item) => (
+          <ItemDeMenu key={item.href} item={item} pathname={pathname} />
+        ))}
+
+        <div className="my-2 border-t border-border" />
+
+        {menuSecundario.map((item) => (
+          <ItemDeMenu key={item.href} item={item} pathname={pathname} />
+        ))}
+        {isAdmin && (
+          <ItemDeMenu
+            item={{ icon: Shield, label: "Admin", href: "/admin" }}
+            pathname={pathname}
+          />
+        )}
+
+        {/* Disciplinas reais, agrupadas por semestre — atalho rápido pra
+            entrar direto numa disciplina sem passar pela vitrine.
+            Ver IDENTIDADE_CLINICUS.md */}
         <SemestresReais pathname={pathname} />
       </nav>
 
@@ -129,7 +171,19 @@ export function Sidebar() {
       )}
 
       {/* Profile Link */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-1">
+        <Link
+          href="/planos"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
+            pathname === "/planos"
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:bg-card hover:text-foreground",
+          )}
+        >
+          <Crown className="w-5 h-5" />
+          Minha Assinatura
+        </Link>
         <Link
           href="/perfil"
           className={cn(
@@ -152,9 +206,12 @@ export function MobileSidebar() {
   const pathname = usePathname();
   const { profile } = useAuthStore();
   const isAdminMobile = !!(profile as any)?.is_admin;
-  const visibleMenuItems = isAdminMobile
-    ? [...menuItems, { icon: Shield, label: "Admin", href: "/admin" }]
-    : menuItems;
+  const itensMobile = [
+    ...menuPrincipal,
+    ...menuPraticar,
+    ...menuSecundario,
+    ...(isAdminMobile ? [{ icon: Shield, label: "Admin", href: "/admin" }] : []),
+  ];
 
   return (
     <>
@@ -204,7 +261,7 @@ export function MobileSidebar() {
             </div>
 
             <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
-              {visibleMenuItems.map((item) => {
+              {itensMobile.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
@@ -257,8 +314,8 @@ export function BottomNav() {
   const { isPremium } = useAuthStore();
 
   const navItems = [
-    { icon: Home, label: "Home", href: "/dashboard" },
-    { icon: FileText, label: "Resumos", href: "/resumos" },
+    { icon: Home, label: "Início", href: "/dashboard" },
+    { icon: GraduationCap, label: "Disciplinas", href: "/disciplinas" },
     { icon: Brain, label: "Simulados", href: "/simulados" },
     { icon: Heart, label: "Casos", href: "/casos" },
     { icon: User, label: "Perfil", href: "/perfil" },
@@ -338,7 +395,7 @@ function SemestresReais({ pathname }: { pathname: string }) {
                 className="mt-1 space-y-0.5 pl-2"
               >
                 {sem.disciplinas.map((d) => {
-                  const href = `/resumos?disciplina=${encodeURIComponent(d.disciplina)}`;
+                  const href = `/disciplinas/${encodeURIComponent(d.disciplina)}`;
                   return (
                     <Link
                       key={d.disciplina}

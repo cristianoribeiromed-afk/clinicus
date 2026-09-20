@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { loggedQuery, logLoadingFim } from "@/lib/supabase-debug";
 import { AppLayout } from "@/components/layout/app-layout";
-import { BookOpen, FileText, Stethoscope } from "lucide-react";
+import { GraduationCap, FileText, Stethoscope } from "lucide-react";
 
 /**
  * Dashboard reescrito do zero (ver conversa: várias tentativas de
@@ -161,14 +161,14 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
-            href="/resumos"
+            href="/disciplinas"
             className="bg-card border border-border rounded-xl p-5 hover:border-primary/40 transition-colors flex items-center gap-4"
           >
             <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary" />
+              <GraduationCap className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="font-semibold">Guias de Estudo</p>
+              <p className="font-semibold">Disciplinas</p>
               <p className="text-xs text-muted-foreground">Continue seus estudos</p>
             </div>
           </Link>

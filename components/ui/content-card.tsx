@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Clock, Star, Lock, Eye, FileText, Brain, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Content, ContentType } from "@/types";
@@ -11,6 +10,10 @@ interface ContentCardProps {
   isFavorite?: boolean;
   onFavorite?: () => void;
   showDescription?: boolean;
+  /** Esconde "Resumo · Disciplina" — usar quando a lista já está agrupada
+   * por disciplina (ex.: página de Resumos), pra não repetir a mesma
+   * informação em cada card. */
+  showTypeLabel?: boolean;
 }
 
 const typeIcons: Record<ContentType, typeof Brain> = {
@@ -25,19 +28,67 @@ const typeLabels: Record<ContentType, string> = {
   caso_clinico: "Caso clínico",
 };
 
-const typeColors: Record<ContentType, string> = {
-  resumo: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  simulado: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  caso_clinico: "bg-rose-500/20 text-rose-400 border-rose-500/30",
-};
+// Paleta restrita, reaproveitando os tons que o design system já usa em
+// gráficos (tailwind.config.ts, chart-1 a chart-5) mais dois tons próximos
+// -- nenhuma cor nova foi inventada só para isto.
+const ACCENT_PALETTE = [
+  "#3B82F6", // chart-1 (azul)
+  "#10B981", // chart-2 (esmeralda)
+  "#F59E0B", // chart-3 (âmbar)
+  "#EF4444", // chart-4 (vermelho)
+  "#8B5CF6", // chart-5 (violeta)
+  "#06B6D4", // ciano
+  "#EC4899", // rosa
+];
+
+// Cor de acento por disciplina, derivada do próprio nome (hash simples) --
+// não da lista `DISCIPLINAS` de lib/config.ts, que é um currículo fabricado
+// pelo template e não corresponde de forma confiável ao texto real salvo em
+// `conteudos.disciplina` (ver LEGACY-AUDIT.md). Isso garante que toda
+// disciplina tem uma cor estável e consistente sem depender dessa lista.
+function accentForDisciplina(nome: string): string {
+  let hash = 0;
+  for (let i = 0; i < nome.length; i++) {
+    hash = (hash << 5) - hash + nome.charCodeAt(i);
+    hash |= 0;
+  }
+  return ACCENT_PALETTE[Math.abs(hash) % ACCENT_PALETTE.length];
+}
+
+// Extrai "01", "02"... de títulos como "Capítulo 1 — Generalidades" -- é uma
+// sequência real (ver frontend-design/SKILL.md), por isso vira um número
+// grande e discreto no lugar do ícone genérico. Títulos que não seguem esse
+// padrão ("Master Osteo...", "Raio-X da Disciplina") caem no ícone do tipo.
+function extrairNumeroCapitulo(titulo: string): string | null {
+  const match = titulo.match(/cap[íi]tulo\s+(\d+)/i);
+  return match ? match[1].padStart(2, "0") : null;
+}
 
 export function ContentCard({
   content,
   isFavorite = false,
   onFavorite,
   showDescription = false,
+  showTypeLabel = true,
 }: ContentCardProps) {
   const TypeIcon = typeIcons[content.tipo];
+  const accent = accentForDisciplina(content.disciplina || content.tipo);
+  const numeroCapitulo = extrairNumeroCapitulo(content.titulo);
+
+  const totalQuestoes = Array.isArray(content.questoes)
+    ? content.questoes.length
+    : 0;
+  // Tempo e contagem de questões só fazem sentido pra Simulado/Caso
+  // clínico -- um Resumo não tem "questões" nem cronômetro. Mostrar "0 min"
+  // num Resumo (o que a versão anterior fazia, herdado de um campo que a
+  // importação do conteúdo legado preencheu por padrão) parecia um dado
+  // quebrado, não uma informação real.
+  const mostraMetaDePratica =
+    content.tipo !== "resumo" && (totalQuestoes > 0 || !!content.tempo_por_questao);
+  const minutosEstimados =
+    content.tempo_por_questao && totalQuestoes > 0
+      ? Math.round((content.tempo_por_questao * totalQuestoes) / 60)
+      : null;
 
   const getHref = () => {
     switch (content.tipo) {
@@ -53,131 +104,120 @@ export function ContentCard({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
+    <Link
+      href={getHref()}
+      className="group relative flex flex-col rounded-lg bg-card border border-border hover:border-white/20 hover:bg-white/[0.02] transition-colors overflow-hidden"
     >
-      <Link
-        href={getHref()}
-        className="block group relative rounded-xl overflow-hidden bg-card border border-border hover:border-primary/30 transition-all duration-300"
-      >
-        {/* Premium Badge */}
-        {content.premium && (
-          <div className="absolute top-3 right-3 z-10">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/80 backdrop-blur-sm border border-primary/50">
-              <Lock className="w-3 h-3 text-white" />
-              <span className="text-xs text-white font-medium">Premium</span>
-            </div>
-          </div>
-        )}
+      {/* Aresta de acento -- identidade da disciplina, sem caixa de ícone */}
+      <span
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ backgroundColor: accent }}
+        aria-hidden
+      />
 
-        {/* Favorite Button */}
-        {onFavorite && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onFavorite();
-            }}
-            className="absolute top-3 left-3 z-10 p-2 rounded-full bg-card/80 backdrop-blur-sm border border-border hover:border-primary/50 transition-all"
-          >
-            <Star
-              className={cn(
-                "w-4 h-4 transition-colors",
-                isFavorite
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "text-muted-foreground",
-              )}
-            />
-          </button>
-        )}
-
-        {/* Thumbnail Area */}
-        <div className="relative h-32 bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center">
-          <div className={cn("p-4 rounded-2xl", typeColors[content.tipo])}>
-            <TypeIcon className="w-8 h-8" />
+      <div className="pl-4 pr-3 py-3 flex flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {numeroCapitulo ? (
+              <span
+                className="text-base font-semibold tabular-nums flex-shrink-0"
+                style={{ color: accent }}
+              >
+                {numeroCapitulo}
+              </span>
+            ) : (
+              <TypeIcon
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: accent }}
+              />
+            )}
+            {showTypeLabel && (
+              <span className="text-xs text-muted-foreground truncate">
+                {typeLabels[content.tipo]} · {content.disciplina}
+              </span>
+            )}
+            {content.etapa && (
+              <span className="text-xs text-muted-foreground/70 flex-shrink-0">
+                {content.etapa}
+              </span>
+            )}
           </div>
 
-          {/* Hover glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-
-        {/* Content Info */}
-        <div className="p-4">
-          {/* Type Badge */}
-          <div className="flex items-center gap-2 mb-2">
-            <span
-              className={cn(
-                "text-xs px-2 py-0.5 rounded-full border",
-                typeColors[content.tipo],
-              )}
-            >
-              {typeLabels[content.tipo]}
-            </span>
-            <span className="text-xs text-muted-foreground capitalize">
-              {content.disciplina.replace("-", " ")}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-            {content.titulo}
-          </h3>
-
-          {/* Description */}
-          {showDescription && content.descricao && (
-            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-              {content.descricao}
-            </p>
-          )}
-
-          {/* Meta */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-3">
-              {content.questoes && content.questoes.length > 0 && (
-                <span className="flex items-center gap-1">
-                  <Brain className="w-3 h-3" />
-                  {Array.isArray(content.questoes)
-                    ? content.questoes.length
-                    : 0}{" "}
-                  Questões
-                </span>
-              )}
-              {content.tempo_por_questao && content.tempo_por_questao > 0 && (
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {Math.round(
-                    (content.tempo_por_questao *
-                      (Array.isArray(content.questoes)
-                        ? content.questoes.length
-                        : 0)) /
-                      60,
-                  )}{" "}
-                  min
-                </span>
-              )}
-            </div>
-            <span className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              {content.visualizacoes}
-            </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
+            {onFavorite && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onFavorite();
+                }}
+                aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                className="text-muted-foreground hover:text-yellow-400 transition-colors"
+              >
+                <Star
+                  className={cn(
+                    "w-3.5 h-3.5 transition-colors",
+                    isFavorite && "fill-yellow-400 text-yellow-400",
+                  )}
+                />
+              </button>
+            )}
+            {content.premium && (
+              <Lock
+                className="w-3.5 h-3.5 text-muted-foreground"
+                aria-label="Conteúdo Premium"
+              >
+                <title>Conteúdo Premium</title>
+              </Lock>
+            )}
           </div>
         </div>
-      </Link>
-    </motion.div>
+
+        <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+          {content.titulo}
+        </h3>
+
+        {showDescription && content.descricao && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {content.descricao}
+          </p>
+        )}
+
+        {mostraMetaDePratica && (
+          <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
+            {totalQuestoes > 0 && (
+              <span className="flex items-center gap-1">
+                <Brain className="w-3 h-3" />
+                {totalQuestoes} Questões
+              </span>
+            )}
+            {minutosEstimados !== null && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {minutosEstimados} min
+              </span>
+            )}
+            {content.visualizacoes > 0 && (
+              <span className="flex items-center gap-1 ml-auto">
+                <Eye className="w-3 h-3" />
+                {content.visualizacoes}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
 
 // Skeleton version for loading states
 export function ContentCardSkeleton() {
   return (
-    <div className="rounded-xl overflow-hidden bg-card border border-border animate-pulse">
-      <div className="h-32 bg-muted" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 w-20 bg-muted rounded" />
-        <div className="h-5 w-3/4 bg-muted rounded" />
-        <div className="h-3 w-1/2 bg-muted rounded" />
+    <div className="relative rounded-lg overflow-hidden bg-card border border-border animate-pulse">
+      <span className="absolute inset-y-0 left-0 w-[3px] bg-muted" aria-hidden />
+      <div className="pl-4 pr-3 py-3 space-y-2.5">
+        <div className="h-4 w-24 bg-muted rounded" />
+        <div className="h-4 w-full bg-muted rounded" />
+        <div className="h-4 w-2/3 bg-muted rounded" />
       </div>
     </div>
   );

@@ -181,7 +181,7 @@ export default function ResumosPage() {
                                     <ContentCard
                                       key={content.id}
                                       content={content}
-                                      showDescription
+                                      showTypeLabel={false}
                                     />
                                   ))}
                                 </div>

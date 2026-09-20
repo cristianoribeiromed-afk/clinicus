@@ -16,6 +16,15 @@ interface UseContentListOptions {
 
 export function useContentList(options: UseContentListOptions = {}) {
   const { user } = useAuthStore();
+  // Usamos só o id (valor estável), não o objeto `user` inteiro. O Supabase
+  // recria esse objeto (nova referência) toda vez que dispara um evento de
+  // auth -- e isso acontece pelo menos duas vezes só na inicialização
+  // (getSession() e o listener onAuthStateChange, ver useAuth). Se `user`
+  // (objeto) estivesse na dependência abaixo, cada uma dessas "mudanças"
+  // (que na prática são o mesmo aluno logado) disparava esta busca de novo,
+  // gerando 2-3 chamadas concorrentes à mesma RPC a cada visita à página --
+  // e é isso que fazia a tela ficar "às vezes carrega, às vezes não".
+  const userId = user?.id;
   const [contents, setContents] = useState<Content[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,11 +86,11 @@ export function useContentList(options: UseContentListOptions = {}) {
       const temItemComProfessor = result.some((c) => c.professor);
       if (temItemComProfessor) {
         const escolhasMap: Record<string, string> = {};
-        if (user) {
+        if (userId) {
           const { data: escolhasData } = await supabase
             .from("professor_escolhas")
             .select("semestre, disciplina, professor")
-            .eq("user_id", user.id);
+            .eq("user_id", userId);
           for (const e of (escolhasData || []) as Array<{
             semestre: string;
             disciplina: string;
@@ -114,7 +123,7 @@ export function useContentList(options: UseContentListOptions = {}) {
     options.ciclo,
     options.premium,
     options.limit,
-    user,
+    userId,
   ]);
 
   useEffect(() => {

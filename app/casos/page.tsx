@@ -95,7 +95,7 @@ export default function CasosPage() {
         />
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="rounded-xl border border-border overflow-hidden divide-y divide-border bg-card">
             {[...Array(8)].map((_, i) => (
               <ContentCardSkeleton key={i} />
             ))}
@@ -112,7 +112,7 @@ export default function CasosPage() {
             initial="hidden"
             animate="visible"
             variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            className="rounded-xl border border-border overflow-hidden divide-y divide-border bg-card"
           >
             {filteredContents.map((content) => (
               <motion.div key={content.id} variants={fadeInUp}>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Crown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
-import { ContentCard, ContentCardSkeleton } from "@/components/ui/content-card";
+import { ContentCard, ContentCardSkeleton, accentForDisciplina } from "@/components/ui/content-card";
 import { FilterBar } from "@/components/ui/search-filter";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useContentList } from "@/lib/hooks/use-content";
@@ -119,7 +119,7 @@ export default function ResumosPage() {
         />
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="rounded-xl border border-border overflow-hidden divide-y divide-border bg-card">
             {[...Array(8)].map((_, i) => (
               <ContentCardSkeleton key={i} />
             ))}
@@ -172,11 +172,16 @@ export default function ResumosPage() {
                           {Object.keys(agrupado[sem])
                             .sort((a, b) => a.localeCompare(b, "pt-BR"))
                             .map((disc) => (
-                              <div key={disc} className="space-y-3">
-                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                              <div key={disc} className="space-y-2">
+                                <h3 className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+                                  <span
+                                    className="w-1 h-4 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: accentForDisciplina(disc) }}
+                                    aria-hidden
+                                  />
                                   {disc}
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                <div className="rounded-xl border border-border overflow-hidden divide-y divide-border bg-card">
                                   {agrupado[sem][disc].map((content) => (
                                     <ContentCard
                                       key={content.id}

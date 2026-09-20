@@ -33,7 +33,7 @@ export function useDisciplinasVitrine() {
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDisciplinas = useCallback(async () => {
+  const fetchDisciplinas = useCallback(async (isCancelled: () => boolean = () => false) => {
     try {
       setLoading(true);
       setError(null);
@@ -87,19 +87,25 @@ export function useDisciplinasVitrine() {
           return a.disciplina.localeCompare(b.disciplina, "pt-BR");
         });
 
-      setDisciplinas(resultado);
+      if (!isCancelled()) setDisciplinas(resultado);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao carregar disciplinas",
-      );
+      if (!isCancelled()) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao carregar disciplinas",
+        );
+      }
     } finally {
-      setLoading(false);
+      if (!isCancelled()) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchDisciplinas();
+    let cancelled = false;
+    fetchDisciplinas(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [fetchDisciplinas]);
 
-  return { disciplinas, isLoading, error, refetch: fetchDisciplinas };
+  return { disciplinas, isLoading, error, refetch: () => fetchDisciplinas() };
 }

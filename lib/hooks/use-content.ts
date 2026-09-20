@@ -29,15 +29,23 @@ export function useContentList(options: UseContentListOptions = {}) {
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchContents = useCallback(async () => {
+  const fetchContents = useCallback(async (isCancelled: () => boolean = () => false) => {
     // Rede de segurança: se a query travar sem nunca resolver nem rejeitar
     // (rede lenta, RPC presa, env var errada na Vercel), força o loading a
     // terminar em 10s com um erro visível -- em vez de deixar a tela presa
     // num esqueleto de carregamento pra sempre (mesmo padrão já usado no
     // useAuth pra evitar a "tela em branco").
+    //
+    // `isCancelled` existe porque, sem isso, navegar pra outra tela antes
+    // dos 10s não cancelava esse timer -- ele continuava contando e, ao
+    // disparar, logava um erro assustador no console e chamava setState
+    // num hook que ninguém mais está usando. Cada chamada desta função
+    // (uma por vez que o useEffect roda) tem seu próprio `cancelled`,
+    // fechado no escopo do efeito que a disparou -- não é uma flag
+    // compartilhada entre chamadas diferentes.
     let finished = false;
     const timeoutId = setTimeout(() => {
-      if (!finished) {
+      if (!finished && !isCancelled()) {
         console.error(
           "Timeout: useContentList não respondeu em 10s. Verifique a RPC get_conteudos_preview / conexão com Supabase.",
         );
@@ -106,16 +114,20 @@ export function useContentList(options: UseContentListOptions = {}) {
         });
       }
 
-      setContents(result as Content[]);
+      if (!isCancelled()) setContents(result as Content[]);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao carregar conteudos",
-      );
+      if (!isCancelled()) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao carregar conteudos",
+        );
+      }
     } finally {
       finished = true;
       clearTimeout(timeoutId);
-      logLoadingFim("useContentList");
-      setLoading(false);
+      if (!isCancelled()) {
+        logLoadingFim("useContentList");
+        setLoading(false);
+      }
     }
   }, [
     options.tipo,
@@ -127,10 +139,14 @@ export function useContentList(options: UseContentListOptions = {}) {
   ]);
 
   useEffect(() => {
-    fetchContents();
+    let cancelled = false;
+    fetchContents(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [fetchContents]);
 
-  return { contents, isLoading, error, refetch: fetchContents };
+  return { contents, isLoading, error, refetch: () => fetchContents() };
 }
 
 // Busca um conteudo com acesso seguro:

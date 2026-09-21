@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { FilterBar } from "@/components/ui/search-filter";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useDisciplinasVitrine } from "@/lib/hooks/use-disciplinas-vitrine";
+import { useUniversidade, ehDisciplinaCDE, type Universidade } from "@/lib/hooks/use-universidade";
 import { accentForDisciplina } from "@/components/ui/content-card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,14 @@ export default function DisciplinasPage() {
   useAuth(true);
   const [busca, setBusca] = useState("");
   const { disciplinas, isLoading, error, refetch } = useDisciplinasVitrine();
+  const { universidade, carregado, escolherUniversidade } = useUniversidade();
+
+  const disciplinasDaUniversidade = useMemo(() => {
+    if (!universidade) return [];
+    return disciplinas.filter((d) =>
+      universidade === "cde" ? ehDisciplinaCDE(d.disciplina) : !ehDisciplinaCDE(d.disciplina),
+    );
+  }, [disciplinas, universidade]);
 
   // "básico"/"clínico" (com acento) são os únicos valores que o banco aceita
   // (CHECK constraint em conteudos.ciclo). A classificação em si vem de uma
@@ -70,23 +79,20 @@ export default function DisciplinasPage() {
   // confirmada pela fonte original (ver P46 em DECISIONS.md) -- é dado real
   // da coluna, não inventado aqui, mas com essa ressalva conhecida.
   const ciclosDisponiveis = useMemo(() => {
-    const presentes = new Set(disciplinas.map((d) => d.ciclo).filter(Boolean) as string[]);
+    const presentes = new Set(disciplinasDaUniversidade.map((d) => d.ciclo).filter(Boolean) as string[]);
     // Básico antes de Clínico quando os dois existem, já que é a ordem
     // natural da graduação -- não é alfabético à toa.
     return Array.from(presentes).sort((a, b) => (a === "básico" ? -1 : 1));
-  }, [disciplinas]);
+  }, [disciplinasDaUniversidade]);
 
   const [cicloAtivo, setCicloAtivo] = useState<string | null>(null);
   useEffect(() => {
-    // Assim que os dados chegam, ativa o primeiro ciclo disponível --
-    // a tela nunca fica sem nenhum ciclo selecionado (diferente da versão
-    // anterior, que tinha um "Todos" como padrão).
-    if (!cicloAtivo && ciclosDisponiveis.length > 0) {
-      setCicloAtivo(ciclosDisponiveis[0]);
-    }
-  }, [ciclosDisponiveis, cicloAtivo]);
+    // Assim que os dados chegam (ou a universidade muda), ativa o primeiro
+    // ciclo disponível -- a tela nunca fica sem nenhum ciclo selecionado.
+    setCicloAtivo(ciclosDisponiveis[0] ?? null);
+  }, [ciclosDisponiveis]);
 
-  const doCiclo = disciplinas.filter((d) => !cicloAtivo || d.ciclo === cicloAtivo);
+  const doCiclo = disciplinasDaUniversidade.filter((d) => !cicloAtivo || d.ciclo === cicloAtivo);
 
   const semestresDoCiclo = useMemo(() => {
     const nums = new Set(doCiclo.map((d) => d.numeroSemestre));
@@ -124,6 +130,41 @@ export default function DisciplinasPage() {
           </div>
         </div>
 
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-card border border-border w-fit">
+          <button
+            onClick={() => escolherUniversidade("interamericana")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
+              universidade === "interamericana"
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            🎓 Universidad Interamericana
+          </button>
+          <button
+            onClick={() => escolherUniversidade("cde")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
+              universidade === "cde"
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            🏥 UCP — Ciudad del Este
+          </button>
+        </div>
+
+        {!carregado ? null : !universidade ? (
+          <div className="p-12 text-center rounded-xl bg-card border border-border">
+            <span className="text-3xl">👆</span>
+            <h3 className="font-semibold mt-3 mb-1">Escolha sua universidade acima</h3>
+            <p className="text-sm text-muted-foreground">
+              Pra ver as disciplinas certas pra você.
+            </p>
+          </div>
+        ) : (
+        <>
         {/* Ciclo — sempre um ativo, sem opção "Todos". Só aparece o
             alternador se houver mais de um ciclo nos dados reais. */}
         {ciclosDisponiveis.length > 1 && (
@@ -223,6 +264,8 @@ export default function DisciplinasPage() {
               </div>
             )}
           </div>
+        )}
+        </>
         )}
       </div>
     </AppLayout>

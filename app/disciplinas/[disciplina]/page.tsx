@@ -101,7 +101,8 @@ export default function DisciplinaPage() {
           <div>
             <h1 className="text-xl lg:text-2xl font-bold leading-tight">{disciplina}</h1>
             {!carregandoResumo && resumoDisciplina && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground capitalize">
+                {resumoDisciplina.ciclo ? `Ciclo ${resumoDisciplina.ciclo}` : "Ciclo não classificado"} ·{" "}
                 {resumoDisciplina.numeroSemestre}º semestre ·{" "}
                 {resumoDisciplina.totalResumos} resumos ·{" "}
                 {resumoDisciplina.totalCasos} casos clínicos ·{" "}

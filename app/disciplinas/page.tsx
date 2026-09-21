@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { GraduationCap, ArrowRight } from "lucide-react";
+import { GraduationCap, ArrowRight, Stethoscope, BookOpen } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { FilterBar } from "@/components/ui/search-filter";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useDisciplinasVitrine } from "@/lib/hooks/use-disciplinas-vitrine";
 import { accentForDisciplina } from "@/components/ui/content-card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function DisciplinaCardSkeleton() {
   return (
@@ -26,9 +27,23 @@ export default function DisciplinasPage() {
   const [busca, setBusca] = useState("");
   const { disciplinas, isLoading, error, refetch } = useDisciplinasVitrine();
 
-  const filtradas = disciplinas.filter((d) =>
-    d.disciplina.toLowerCase().includes(busca.toLowerCase()),
-  );
+  // "básico"/"clínico" são os únicos valores que o banco aceita (CHECK
+  // constraint em conteudos.ciclo). A classificação em si vem de uma
+  // heurística por semestre, feita na importação do conteúdo legado, nunca
+  // confirmada pela fonte original (ver P46 em DECISIONS.md) -- é dado
+  // real da coluna, não inventado aqui, mas com essa ressalva conhecida.
+  const ciclosDisponiveis = useMemo(() => {
+    const presentes = new Set(disciplinas.map((d) => d.ciclo).filter(Boolean));
+    return Array.from(presentes) as string[];
+  }, [disciplinas]);
+
+  const [cicloAtivo, setCicloAtivo] = useState<string | null>(null);
+
+  const filtradas = disciplinas.filter((d) => {
+    const bateBusca = d.disciplina.toLowerCase().includes(busca.toLowerCase());
+    const bateCiclo = !cicloAtivo || d.ciclo === cicloAtivo;
+    return bateBusca && bateCiclo;
+  });
 
   const porSemestre = filtradas.reduce<Record<number, typeof filtradas>>(
     (acc, d) => {
@@ -56,6 +71,53 @@ export default function DisciplinasPage() {
             </p>
           </div>
         </div>
+
+        {/* Alternador de ciclo — só aparece se houver mais de um ciclo nos
+            dados reais; não trava a navegação se todo o conteúdo ainda
+            estiver classificado num só. */}
+        {ciclosDisponiveis.length > 1 && (
+          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-card border border-border">
+            <button
+              onClick={() => setCicloAtivo(null)}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                cicloAtivo === null
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Todos
+            </button>
+            {ciclosDisponiveis.includes("básico") && (
+              <button
+                onClick={() => setCicloAtivo("básico")}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
+                  cicloAtivo === "básico"
+                    ? "bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Ciclo Básico
+              </button>
+            )}
+            {ciclosDisponiveis.includes("clínico") && (
+              <button
+                onClick={() => setCicloAtivo("clínico")}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
+                  cicloAtivo === "clínico"
+                    ? "bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Stethoscope className="w-3.5 h-3.5" />
+                Ciclo Clínico
+              </button>
+            )}
+          </div>
+        )}
 
         <FilterBar
           searchValue={busca}
@@ -97,22 +159,31 @@ export default function DisciplinasPage() {
                       <Link
                         key={d.disciplina}
                         href={`/disciplinas/${encodeURIComponent(d.disciplina)}`}
-                        className="group flex flex-col gap-2.5 rounded-xl border border-border bg-card hover:border-white/20 hover:bg-white/[0.02] transition-colors p-4"
+                        className="group flex flex-col rounded-xl border border-border bg-card hover:border-white/20 hover:bg-white/[0.02] transition-colors p-4"
                       >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: accent }}
-                          aria-hidden
-                        />
+                        {/* 1. Nome — o elemento de maior peso do card */}
                         <h3 className="font-semibold text-[0.95rem] leading-snug group-hover:text-primary transition-colors">
                           {d.disciplina}
                         </h3>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {/* 2. Contexto — ciclo · semestre, junto num único ponto de acento */}
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span
+                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: accent }}
+                            aria-hidden
+                          />
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {d.ciclo ? `Ciclo ${d.ciclo}` : "Ciclo não classificado"} · {d.numeroSemestre}º semestre
+                          </span>
+                        </div>
+                        {/* 3. Recursos disponíveis — só o que existe de verdade */}
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-2.5">
                           {d.totalResumos > 0 && <span>{d.totalResumos} resumos</span>}
                           {d.totalCasos > 0 && <span>{d.totalCasos} casos clínicos</span>}
                           {d.totalSimulados > 0 && <span>{d.totalSimulados} simulados</span>}
                         </div>
-                        <span className="mt-1 text-xs font-medium text-primary flex items-center gap-1">
+                        {/* 4. Ação */}
+                        <span className="mt-3 text-xs font-medium text-primary flex items-center gap-1">
                           Explorar disciplina
                           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                         </span>

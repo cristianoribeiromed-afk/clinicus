@@ -136,6 +136,9 @@ export function Sidebar() {
 
         <div className="my-2 border-t border-border" />
 
+        <p className="px-3 pb-1 text-xs font-medium text-muted-foreground/70">
+          Estudar
+        </p>
         {menuSecundario.map((item) => (
           <ItemDeMenu key={item.href} item={item} pathname={pathname} />
         ))}

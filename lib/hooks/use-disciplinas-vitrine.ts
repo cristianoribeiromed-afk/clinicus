@@ -22,6 +22,7 @@ export interface DisciplinaVitrine {
   disciplina: string;
   semestre: string;
   numeroSemestre: number;
+  ciclo: string | null;
   totalResumos: number;
   totalCasos: number;
   totalSimulados: number;
@@ -47,11 +48,12 @@ export function useDisciplinasVitrine() {
         tipo: ContentType;
         disciplina: string;
         semestre: string | null;
+        ciclo: string | null;
       }>;
 
       const porDisciplina = new Map<
         string,
-        { semestre: string; resumo: number; simulado: number; caso_clinico: number }
+        { semestre: string; ciclo: string | null; resumo: number; simulado: number; caso_clinico: number }
       >();
 
       for (const row of rows) {
@@ -59,12 +61,17 @@ export function useDisciplinasVitrine() {
         if (!porDisciplina.has(row.disciplina)) {
           porDisciplina.set(row.disciplina, {
             semestre: row.semestre,
+            ciclo: row.ciclo,
             resumo: 0,
             simulado: 0,
             caso_clinico: 0,
           });
         }
         const contagem = porDisciplina.get(row.disciplina)!;
+        // Uma disciplina pode ter itens sem `ciclo` preenchido junto de itens
+        // com -- fica valendo o primeiro valor real que aparecer, em vez de
+        // sobrescrever por um nulo.
+        if (!contagem.ciclo && row.ciclo) contagem.ciclo = row.ciclo;
         if (row.tipo === "resumo") contagem.resumo += 1;
         else if (row.tipo === "simulado") contagem.simulado += 1;
         else if (row.tipo === "caso_clinico") contagem.caso_clinico += 1;
@@ -75,6 +82,7 @@ export function useDisciplinasVitrine() {
           disciplina,
           semestre: c.semestre,
           numeroSemestre: parseInt(c.semestre.replace(/\D/g, ""), 10) || 0,
+          ciclo: c.ciclo,
           totalResumos: c.resumo,
           totalCasos: c.caso_clinico,
           totalSimulados: c.simulado,

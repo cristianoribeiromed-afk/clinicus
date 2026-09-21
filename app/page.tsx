@@ -11,6 +11,7 @@ import {
   Heart,
   Clock,
   BarChart3,
+  BookOpen,
   ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -375,30 +376,62 @@ export default function LandingPage() {
               </motion.p>
             </motion.div>
 
-            <div className="mb-12">
-              <h3 className="text-xl font-semibold mb-6 text-center md:text-left">
-                Disciplinas disponíveis
-              </h3>
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={staggerContainer}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-              >
-                {disciplinasReais.map((disc) => (
-                  <Link
-                    key={`${disc.semestre}-${disc.disciplina}`}
-                    href={`/resumos?disciplina=${encodeURIComponent(disc.disciplina)}`}
-                    className="bg-card rounded-xl border border-border p-4 hover:border-primary/40 transition-colors block"
-                  >
-                    <p className="font-semibold truncate">{disc.disciplina}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {disc.semestre.replace("semestre-", "")}º semestre
-                    </p>
-                  </Link>
-                ))}
-              </motion.div>
+            <div className="mb-12 space-y-10">
+              {["básico", "clínico"]
+                .filter((ciclo) => disciplinasVitrine.some((d) => d.ciclo === ciclo))
+                .map((ciclo) => {
+                  const doCiclo = disciplinasVitrine.filter((d) => d.ciclo === ciclo);
+                  const semestres = Array.from(
+                    new Set(doCiclo.map((d) => d.numeroSemestre)),
+                  ).sort((a, b) => a - b);
+                  return (
+                    <div key={ciclo} className="space-y-6">
+                      <div className="flex items-center gap-2">
+                        {ciclo === "básico" ? (
+                          <BookOpen className="w-4 h-4 text-primary" />
+                        ) : (
+                          <Stethoscope className="w-4 h-4 text-primary" />
+                        )}
+                        <h3 className="text-lg font-semibold capitalize">
+                          Ciclo {ciclo}
+                        </h3>
+                      </div>
+                      {semestres.map((num) => (
+                        <div key={num} className="space-y-3">
+                          <h4 className="text-sm font-medium text-muted-foreground">
+                            {num}º semestre
+                          </h4>
+                          <motion.div
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true }}
+                            variants={staggerContainer}
+                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                          >
+                            {doCiclo
+                              .filter((d) => d.numeroSemestre === num)
+                              .map((disc) => (
+                                <motion.div key={disc.disciplina} variants={fadeInUp}>
+                                  <Link
+                                    href={`/disciplinas/${encodeURIComponent(disc.disciplina)}`}
+                                    className="bg-card rounded-xl border border-border p-4 hover:border-primary/40 transition-colors block"
+                                  >
+                                    <p className="font-semibold truncate">
+                                      {disc.disciplina}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {disc.totalResumos + disc.totalCasos + disc.totalSimulados}{" "}
+                                      conteúdos
+                                    </p>
+                                  </Link>
+                                </motion.div>
+                              ))}
+                          </motion.div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </section>

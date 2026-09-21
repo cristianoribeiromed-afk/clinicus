@@ -2,14 +2,28 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Ver app/api/admin/conteudos/route.ts para o porquê de não criar o
+// cliente no escopo do módulo: um createClient() aqui em cima roda ao
+// importar o arquivo durante o BUILD (não só numa requisição de verdade),
+// e se uma env var estiver vazia/malformada nesse momento, derruba o build
+// inteiro por causa desta única rota.
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return null;
+  }
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 // Registrar nova sessão e invalidar anteriores
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: "Serviço não configurado." }, { status: 500 });
+    }
+
     const { user_id } = await request.json();
 
     if (!user_id) {
@@ -57,6 +71,11 @@ export async function POST(request: NextRequest) {
 // Verificar se sessão atual é válida
 export async function GET(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return NextResponse.json({ valid: false });
+    }
+
     const session_token = request.cookies.get("clinicus_session")?.value;
 
     if (!session_token) {
@@ -90,6 +109,13 @@ export async function GET(request: NextRequest) {
 // Encerrar sessão (logout)
 export async function DELETE(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      const response = NextResponse.json({ success: true });
+      response.cookies.delete("clinicus_session");
+      return response;
+    }
+
     const session_token = request.cookies.get("clinicus_session")?.value;
 
     if (session_token) {

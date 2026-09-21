@@ -10,32 +10,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#071014",
-        sidebar: "#09151A",
-        foreground: "#F2F7F8",
+        background: "#030707",
+        sidebar: "#0A0D0D",
+        foreground: "#FFFFFF",
         card: {
-          DEFAULT: "#0D1B21",
-          foreground: "#F2F7F8",
+          DEFAULT: "#0F1115",
+          foreground: "#FFFFFF",
         },
         popover: {
-          DEFAULT: "#0D1B21",
-          foreground: "#F2F7F8",
+          DEFAULT: "#0F1115",
+          foreground: "#FFFFFF",
         },
         primary: {
-          DEFAULT: "#18B6A4",
-          foreground: "#FFFFFF",
+          DEFAULT: "#1DB954",
+          light: "#7DFFC1",
+          foreground: "#04140A",
         },
         secondary: {
-          DEFAULT: "#3B82F6",
-          foreground: "#FFFFFF",
+          DEFAULT: "#D8A53B",
+          foreground: "#1A1200",
         },
         muted: {
-          DEFAULT: "#0D1B21",
-          foreground: "#91A7AE",
+          DEFAULT: "#0F1115",
+          foreground: "#A5A5A5",
         },
         accent: {
-          DEFAULT: "#18B6A4",
-          foreground: "#FFFFFF",
+          DEFAULT: "#1DB954",
+          foreground: "#04140A",
         },
         destructive: {
           DEFAULT: "#EF4444",
@@ -50,26 +51,29 @@ const config: Config = {
           foreground: "#FFFFFF",
         },
         purple: "#8B5CF6",
-        border: "#1A3038",
-        "surface-hover": "#12252C",
-        input: "#0D1B21",
-        ring: "#18B6A4",
+        border: "rgba(255,255,255,0.08)",
+        "border-strong": "rgba(255,255,255,0.14)",
+        "surface-2": "#171A20",
+        "surface-hover": "#171A20",
+        input: "#0F1115",
+        ring: "#1DB954",
         chart: {
-          "1": "#3B82F6",
-          "2": "#10B981",
-          "3": "#F59E0B",
+          "1": "#1DB954",
+          "2": "#3B82F6",
+          "3": "#D8A53B",
           "4": "#EF4444",
           "5": "#8B5CF6",
         },
       },
       borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
-        sm: "0.25rem",
+        lg: "1.5rem",
+        md: "1.125rem",
+        sm: "0.75rem",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         heading: ["Geist", "Inter", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Cormorant Garamond", "Georgia", "serif"],
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -78,12 +82,14 @@ const config: Config = {
         "gradient-dark":
           "linear-gradient(135deg, #0A0A0F 0%, #1a1a2e 50%, #0A0A0F 100%)",
         "gradient-hero":
-          "linear-gradient(135deg, rgba(24,182,164,0.12) 0%, rgba(59,130,246,0.06) 50%, transparent 100%)",
+          "linear-gradient(135deg, rgba(29,185,84,0.14) 0%, rgba(216,165,59,0.05) 50%, transparent 100%)",
       },
       boxShadow: {
-        glow: "0 0 20px rgba(24,182,164,0.3)",
-        "glow-lg": "0 0 30px rgba(24,182,164,0.4)",
-        "glow-secondary": "0 0 20px rgba(59,130,246,0.3)",
+        glow: "0 0 20px rgba(29,185,84,0.3)",
+        "glow-lg": "0 0 60px rgba(29,185,84,0.18)",
+        "glow-secondary": "0 0 60px rgba(216,165,59,0.16)",
+        card: "0 30px 80px rgba(0,0,0,0.35)",
+        "card-hover": "0 40px 100px rgba(0,0,0,0.45)",
       },
       animation: {
         "fade-in-up": "fade-in-up 0.5s ease-out",

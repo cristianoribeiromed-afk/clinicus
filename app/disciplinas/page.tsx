@@ -92,7 +92,10 @@ export default function DisciplinasPage() {
     setCicloAtivo(ciclosDisponiveis[0] ?? null);
   }, [ciclosDisponiveis]);
 
-  const doCiclo = disciplinasDaUniversidade.filter((d) => !cicloAtivo || d.ciclo === cicloAtivo);
+  const doCiclo = useMemo(
+    () => disciplinasDaUniversidade.filter((d) => !cicloAtivo || d.ciclo === cicloAtivo),
+    [disciplinasDaUniversidade, cicloAtivo],
+  );
 
   const semestresDoCiclo = useMemo(() => {
     const nums = new Set(doCiclo.map((d) => d.numeroSemestre));

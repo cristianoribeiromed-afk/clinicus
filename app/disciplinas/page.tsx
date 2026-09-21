@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { GraduationCap, ArrowRight, Stethoscope, BookOpen } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -22,40 +22,92 @@ function DisciplinaCardSkeleton() {
   );
 }
 
+function DisciplinaCard({ d }: { d: ReturnType<typeof useDisciplinasVitrine>["disciplinas"][number] }) {
+  const accent = accentForDisciplina(d.disciplina);
+  return (
+    <Link
+      href={`/disciplinas/${encodeURIComponent(d.disciplina)}`}
+      className="group flex flex-col rounded-xl border border-border bg-card hover:border-white/20 hover:bg-white/[0.02] transition-colors p-4"
+    >
+      {/* 1. Nome — maior peso do card */}
+      <h3 className="font-semibold text-[0.95rem] leading-snug group-hover:text-primary transition-colors">
+        {d.disciplina}
+      </h3>
+      {/* 2. Contexto */}
+      <div className="flex items-center gap-1.5 mt-1">
+        <span
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: accent }}
+          aria-hidden
+        />
+        <span className="text-xs text-muted-foreground capitalize">
+          {d.ciclo ? `Ciclo ${d.ciclo}` : "Ciclo não classificado"} · {d.numeroSemestre}º semestre
+        </span>
+      </div>
+      {/* 3. Recursos reais */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-2.5">
+        {d.totalResumos > 0 && <span>{d.totalResumos} resumos</span>}
+        {d.totalCasos > 0 && <span>{d.totalCasos} casos clínicos</span>}
+        {d.totalSimulados > 0 && <span>{d.totalSimulados} simulados</span>}
+      </div>
+      {/* 4. Ação */}
+      <span className="mt-3 text-xs font-medium text-primary flex items-center gap-1">
+        Explorar disciplina
+        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+      </span>
+    </Link>
+  );
+}
+
 export default function DisciplinasPage() {
   useAuth(true);
   const [busca, setBusca] = useState("");
   const { disciplinas, isLoading, error, refetch } = useDisciplinasVitrine();
 
-  // "básico"/"clínico" são os únicos valores que o banco aceita (CHECK
-  // constraint em conteudos.ciclo). A classificação em si vem de uma
+  // "básico"/"clínico" (com acento) são os únicos valores que o banco aceita
+  // (CHECK constraint em conteudos.ciclo). A classificação em si vem de uma
   // heurística por semestre, feita na importação do conteúdo legado, nunca
-  // confirmada pela fonte original (ver P46 em DECISIONS.md) -- é dado
-  // real da coluna, não inventado aqui, mas com essa ressalva conhecida.
+  // confirmada pela fonte original (ver P46 em DECISIONS.md) -- é dado real
+  // da coluna, não inventado aqui, mas com essa ressalva conhecida.
   const ciclosDisponiveis = useMemo(() => {
-    const presentes = new Set(disciplinas.map((d) => d.ciclo).filter(Boolean));
-    return Array.from(presentes) as string[];
+    const presentes = new Set(disciplinas.map((d) => d.ciclo).filter(Boolean) as string[]);
+    // Básico antes de Clínico quando os dois existem, já que é a ordem
+    // natural da graduação -- não é alfabético à toa.
+    return Array.from(presentes).sort((a, b) => (a === "básico" ? -1 : 1));
   }, [disciplinas]);
 
   const [cicloAtivo, setCicloAtivo] = useState<string | null>(null);
+  useEffect(() => {
+    // Assim que os dados chegam, ativa o primeiro ciclo disponível --
+    // a tela nunca fica sem nenhum ciclo selecionado (diferente da versão
+    // anterior, que tinha um "Todos" como padrão).
+    if (!cicloAtivo && ciclosDisponiveis.length > 0) {
+      setCicloAtivo(ciclosDisponiveis[0]);
+    }
+  }, [ciclosDisponiveis, cicloAtivo]);
 
-  const filtradas = disciplinas.filter((d) => {
-    const bateBusca = d.disciplina.toLowerCase().includes(busca.toLowerCase());
-    const bateCiclo = !cicloAtivo || d.ciclo === cicloAtivo;
-    return bateBusca && bateCiclo;
-  });
+  const doCiclo = disciplinas.filter((d) => !cicloAtivo || d.ciclo === cicloAtivo);
 
-  const porSemestre = filtradas.reduce<Record<number, typeof filtradas>>(
-    (acc, d) => {
-      if (!acc[d.numeroSemestre]) acc[d.numeroSemestre] = [];
-      acc[d.numeroSemestre].push(d);
-      return acc;
-    },
-    {},
-  );
-  const semestresOrdenados = Object.keys(porSemestre)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const semestresDoCiclo = useMemo(() => {
+    const nums = new Set(doCiclo.map((d) => d.numeroSemestre));
+    return Array.from(nums).sort((a, b) => a - b);
+  }, [doCiclo]);
+
+  const [semestreAtivo, setSemestreAtivo] = useState<number | null>(null);
+  useEffect(() => {
+    // Troca de ciclo sempre reseta pro primeiro semestre daquele ciclo --
+    // nunca fica um semestre do ciclo anterior selecionado por engano.
+    setSemestreAtivo(semestresDoCiclo[0] ?? null);
+  }, [cicloAtivo, semestresDoCiclo]);
+
+  // Buscar texto ignora a aba de semestre de propósito: procurar algo
+  // específico não deveria depender de já estar no semestre certo -- só
+  // continua respeitando o ciclo ativo, pra não misturar Básico e Clínico
+  // numa busca só.
+  const estaBuscando = busca.trim().length > 0;
+  const listaExibida = estaBuscando
+    ? doCiclo.filter((d) => d.disciplina.toLowerCase().includes(busca.toLowerCase()))
+    : doCiclo.filter((d) => d.numeroSemestre === semestreAtivo);
 
   return (
     <AppLayout>
@@ -72,22 +124,10 @@ export default function DisciplinasPage() {
           </div>
         </div>
 
-        {/* Alternador de ciclo — só aparece se houver mais de um ciclo nos
-            dados reais; não trava a navegação se todo o conteúdo ainda
-            estiver classificado num só. */}
+        {/* Ciclo — sempre um ativo, sem opção "Todos". Só aparece o
+            alternador se houver mais de um ciclo nos dados reais. */}
         {ciclosDisponiveis.length > 1 && (
           <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-card border border-border">
-            <button
-              onClick={() => setCicloAtivo(null)}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                cicloAtivo === null
-                  ? "bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Todos
-            </button>
             {ciclosDisponiveis.includes("básico") && (
               <button
                 onClick={() => setCicloAtivo("básico")}
@@ -119,24 +159,16 @@ export default function DisciplinasPage() {
           </div>
         )}
 
-        <FilterBar
-          searchValue={busca}
-          onSearchChange={setBusca}
-          showSearch
-        />
+        <FilterBar searchValue={busca} onSearchChange={setBusca} showSearch />
 
         {isLoading ? (
-          <div className="space-y-6">
-            {[0, 1].map((i) => (
-              <div key={i} className="space-y-3">
-                <div className="h-4 w-24 bg-muted rounded animate-pulse" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[...Array(3)].map((_, j) => (
-                    <DisciplinaCardSkeleton key={j} />
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="space-y-3">
+            <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[...Array(6)].map((_, j) => (
+                <DisciplinaCardSkeleton key={j} />
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className="p-12 text-center rounded-xl bg-card border border-border">
@@ -145,62 +177,51 @@ export default function DisciplinasPage() {
             <p className="text-sm text-muted-foreground mb-4">{error}</p>
             <Button size="sm" onClick={() => refetch()}>Tentar novamente</Button>
           </div>
-        ) : semestresOrdenados.length > 0 ? (
-          <div className="space-y-6">
-            {semestresOrdenados.map((num) => (
-              <div key={num} className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground">
-                  {num}º Semestre
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {porSemestre[num].map((d) => {
-                    const accent = accentForDisciplina(d.disciplina);
-                    return (
-                      <Link
-                        key={d.disciplina}
-                        href={`/disciplinas/${encodeURIComponent(d.disciplina)}`}
-                        className="group flex flex-col rounded-xl border border-border bg-card hover:border-white/20 hover:bg-white/[0.02] transition-colors p-4"
-                      >
-                        {/* 1. Nome — o elemento de maior peso do card */}
-                        <h3 className="font-semibold text-[0.95rem] leading-snug group-hover:text-primary transition-colors">
-                          {d.disciplina}
-                        </h3>
-                        {/* 2. Contexto — ciclo · semestre, junto num único ponto de acento */}
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <span
-                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: accent }}
-                            aria-hidden
-                          />
-                          <span className="text-xs text-muted-foreground capitalize">
-                            {d.ciclo ? `Ciclo ${d.ciclo}` : "Ciclo não classificado"} · {d.numeroSemestre}º semestre
-                          </span>
-                        </div>
-                        {/* 3. Recursos disponíveis — só o que existe de verdade */}
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-2.5">
-                          {d.totalResumos > 0 && <span>{d.totalResumos} resumos</span>}
-                          {d.totalCasos > 0 && <span>{d.totalCasos} casos clínicos</span>}
-                          {d.totalSimulados > 0 && <span>{d.totalSimulados} simulados</span>}
-                        </div>
-                        {/* 4. Ação */}
-                        <span className="mt-3 text-xs font-medium text-primary flex items-center gap-1">
-                          Explorar disciplina
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
         ) : (
-          <div className="p-12 text-center rounded-xl bg-card border border-border">
-            <GraduationCap className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-semibold mb-2">Nenhuma disciplina encontrada</h3>
-            <p className="text-sm text-muted-foreground">
-              Tente ajustar a busca
-            </p>
+          <div className="space-y-4">
+            {/* Abas de semestre — só dentro do ciclo ativo, um de cada vez,
+                pra não empilhar tudo verticalmente. Somem durante a busca,
+                já que buscar cruza os semestres do ciclo inteiro. */}
+            {!estaBuscando && semestresDoCiclo.length > 0 && (
+              <div className="flex items-center gap-1 overflow-x-auto pb-1">
+                {semestresDoCiclo.map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => setSemestreAtivo(num)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors flex-shrink-0",
+                      semestreAtivo === num
+                        ? "bg-card border border-border text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {num}º Semestre
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {estaBuscando && (
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                Resultado da busca no {cicloAtivo === "clínico" ? "Ciclo Clínico" : "Ciclo Básico"}
+              </h2>
+            )}
+
+            {listaExibida.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {listaExibida.map((d) => (
+                  <DisciplinaCard key={d.disciplina} d={d} />
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center rounded-xl bg-card border border-border">
+                <GraduationCap className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="font-semibold mb-2">Nenhuma disciplina encontrada</h3>
+                <p className="text-sm text-muted-foreground">
+                  {estaBuscando ? "Tente ajustar a busca" : "Nada cadastrado neste semestre ainda"}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -4,25 +4,33 @@
 
 @layer base {
   :root {
-    --background: #060B14;
-    --foreground: #F1F5F9;
-    --card: rgba(255,255,255,0.05);
-    --card-foreground: #F1F5F9;
-    --popover: rgba(255,255,255,0.05);
-    --popover-foreground: #F1F5F9;
-    --primary: #3B82F6;
+    /* Dark Medical Premium -- teal como identidade principal (não mais o
+       azul elétrico genérico de SaaS), superfícies com cor própria em vez
+       de branco translúcido sobre preto puro. */
+    --background: #071014;
+    --sidebar: #09151A;
+    --foreground: #F2F7F8;
+    --card: #0D1B21;
+    --card-foreground: #F2F7F8;
+    --popover: #0D1B21;
+    --popover-foreground: #F2F7F8;
+    --primary: #18B6A4;
     --primary-foreground: #FFFFFF;
-    --secondary: #10B981;
+    --secondary: #3B82F6;
     --secondary-foreground: #FFFFFF;
-    --muted: rgba(255,255,255,0.05);
-    --muted-foreground: #94A3B8;
-    --accent: #3B82F6;
+    --muted: #0D1B21;
+    --muted-foreground: #91A7AE;
+    --accent: #18B6A4;
     --accent-foreground: #FFFFFF;
     --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
-    --border: rgba(255,255,255,0.12);
-    --input: rgba(255,255,255,0.05);
-    --ring: #3B82F6;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --purple: #8B5CF6;
+    --border: #1A3038;
+    --surface-hover: #12252C;
+    --input: #0D1B21;
+    --ring: #18B6A4;
     --radius: 0.75rem;
   }
 }
@@ -82,7 +90,7 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(16,185,129,0.3));
+    background: linear-gradient(135deg, rgba(24,182,164,0.3), rgba(59,130,246,0.3));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;

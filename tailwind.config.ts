@@ -10,39 +10,50 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#060B14",
-        foreground: "#F1F5F9",
+        background: "#071014",
+        sidebar: "#09151A",
+        foreground: "#F2F7F8",
         card: {
-          DEFAULT: "rgba(255,255,255,0.03)",
-          foreground: "#F1F5F9",
+          DEFAULT: "#0D1B21",
+          foreground: "#F2F7F8",
         },
         popover: {
-          DEFAULT: "rgba(255,255,255,0.05)",
-          foreground: "#F1F5F9",
+          DEFAULT: "#0D1B21",
+          foreground: "#F2F7F8",
         },
         primary: {
-          DEFAULT: "#3B82F6",
+          DEFAULT: "#18B6A4",
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#10B981",
+          DEFAULT: "#3B82F6",
           foreground: "#FFFFFF",
         },
         muted: {
-          DEFAULT: "rgba(255,255,255,0.05)",
-          foreground: "#94A3B8",
+          DEFAULT: "#0D1B21",
+          foreground: "#91A7AE",
         },
         accent: {
-          DEFAULT: "#3B82F6",
+          DEFAULT: "#18B6A4",
           foreground: "#FFFFFF",
         },
         destructive: {
           DEFAULT: "#EF4444",
           foreground: "#FFFFFF",
         },
-        border: "rgba(255,255,255,0.08)",
-        input: "rgba(255,255,255,0.05)",
-        ring: "#3B82F6",
+        success: {
+          DEFAULT: "#22C55E",
+          foreground: "#FFFFFF",
+        },
+        warning: {
+          DEFAULT: "#F59E0B",
+          foreground: "#FFFFFF",
+        },
+        purple: "#8B5CF6",
+        border: "#1A3038",
+        "surface-hover": "#12252C",
+        input: "#0D1B21",
+        ring: "#18B6A4",
         chart: {
           "1": "#3B82F6",
           "2": "#10B981",
@@ -67,12 +78,12 @@ const config: Config = {
         "gradient-dark":
           "linear-gradient(135deg, #0A0A0F 0%, #1a1a2e 50%, #0A0A0F 100%)",
         "gradient-hero":
-          "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.05) 50%, transparent 100%)",
+          "linear-gradient(135deg, rgba(24,182,164,0.12) 0%, rgba(59,130,246,0.06) 50%, transparent 100%)",
       },
       boxShadow: {
-        glow: "0 0 20px rgba(59,130,246,0.3)",
-        "glow-lg": "0 0 30px rgba(59,130,246,0.4)",
-        "glow-secondary": "0 0 20px rgba(16,185,129,0.3)",
+        glow: "0 0 20px rgba(24,182,164,0.3)",
+        "glow-lg": "0 0 30px rgba(24,182,164,0.4)",
+        "glow-secondary": "0 0 20px rgba(59,130,246,0.3)",
       },
       animation: {
         "fade-in-up": "fade-in-up 0.5s ease-out",

@@ -80,7 +80,7 @@ export function Sidebar() {
   const { profile, isPremium } = useAuthStore();
   const isAdmin = !!(profile as any)?.is_admin;
   return (
-    <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 flex-col w-64 h-screen bg-background border-r border-border glass">
+    <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 flex-col w-64 h-screen bg-sidebar border-r border-border glass">
       {/* Logo */}
       <div className="p-6">
         <Link href="/" className="flex items-center gap-2">

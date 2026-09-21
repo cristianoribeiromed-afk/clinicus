@@ -13,8 +13,6 @@ import {
   BarChart3,
   ChevronDown,
   ArrowRight,
-  Star,
-  Quote,
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -27,8 +25,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { PLANOS, CONTENT_STATS } from "@/lib/config";
+import { PLANOS } from "@/lib/config";
 import { useDisciplinasReais } from "@/lib/hooks/use-disciplinas";
+import { useDisciplinasVitrine } from "@/lib/hooks/use-disciplinas-vitrine";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -46,6 +45,22 @@ const staggerContainer = {
 export default function LandingPage() {
   const { semestres: semestresReais } = useDisciplinasReais();
   const disciplinasReais = semestresReais.flatMap((s) => s.disciplinas);
+
+  // Números reais, calculados a partir do mesmo dado que a Disciplinas do
+  // app usa -- nada fixo no código. Enquanto carrega, os StatCards mostram
+  // 0 por um instante (mais honesto que herdar um número velho); não há
+  // "taxa de aprovação" nem "questões disponíveis" porque não existe
+  // rastreamento de resultado nem banco de questões avulso hoje -- ver
+  // LEGACY-AUDIT.md. Mostrar isso seria inventar.
+  const { disciplinas: disciplinasVitrine } = useDisciplinasVitrine();
+  const totais = disciplinasVitrine.reduce(
+    (acc, d) => ({
+      resumos: acc.resumos + d.totalResumos,
+      casos: acc.casos + d.totalCasos,
+      simulados: acc.simulados + d.totalSimulados,
+    }),
+    { resumos: 0, casos: 0, simulados: 0 },
+  );
 
   return (
     <>
@@ -77,7 +92,7 @@ export default function LandingPage() {
               <motion.div variants={fadeInUp}>
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
                   <Stethoscope className="w-4 h-4" />
-                  Plataforma #1 para estudantes de medicina
+                  Feito para estudantes de Medicina
                 </span>
               </motion.div>
 
@@ -129,23 +144,16 @@ export default function LandingPage() {
 
               <motion.div
                 variants={fadeInUp}
-                className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground pt-4"
               >
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary border-2 border-background"
-                    />
-                  ))}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>
-                    Mais de <strong className="text-foreground">2.500</strong>{" "}
-                    estudantes já utilizam
-                  </span>
-                </div>
+                <Users className="w-4 h-4" />
+                <span>
+                  Conteúdo real de{" "}
+                  <strong className="text-foreground">
+                    {disciplinasReais.length} disciplinas
+                  </strong>{" "}
+                  já disponível
+                </span>
               </motion.div>
             </motion.div>
 
@@ -178,25 +186,24 @@ export default function LandingPage() {
               className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
             >
               <StatCard
-                value={CONTENT_STATS.Questões}
-                label="Questões Disponiveis"
-                icon={<Brain className="w-8 h-8" />}
+                value={disciplinasReais.length}
+                label="Disciplinas cadastradas"
+                icon={<Stethoscope className="w-8 h-8" />}
               />
               <StatCard
-                value={CONTENT_STATS.resumos}
-                label="Resumos por Disciplina"
+                value={totais.resumos}
+                label="Resumos disponíveis"
                 icon={<FileText className="w-8 h-8" />}
               />
               <StatCard
-                value={CONTENT_STATS.casos_clínicos}
+                value={totais.casos}
                 label="Casos clínicos"
                 icon={<Heart className="w-8 h-8" />}
               />
               <StatCard
-                value={CONTENT_STATS.taxa_aprovacao}
-                suffix="%"
-                label="Taxa de Aprovacao"
-                icon={<BarChart3 className="w-8 h-8" />}
+                value={totais.simulados}
+                label="Simulados"
+                icon={<Brain className="w-8 h-8" />}
               />
             </motion.div>
           </div>
@@ -380,83 +387,6 @@ export default function LandingPage() {
                           : `/checkout?plan=${plan.id}`;
                     }}
                   />
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="py-20 bg-background">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={staggerContainer}
-              className="text-center mb-16"
-            >
-              <motion.h2
-                variants={fadeInUp}
-                className="text-3xl md:text-4xl font-bold mb-4"
-              >
-                O que dizem nossos alunos
-              </motion.h2>
-            </motion.div>
-
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={staggerContainer}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
-            >
-              {[
-                {
-                  name: "Maria Clara",
-                  semester: "4 semestre",
-                  text: "Os simulados me ajudaram a identificar meus pontos fracos. Passei em todas as provas do semestre!",
-                  rating: 5,
-                },
-                {
-                  name: "Joao Pedro",
-                  semester: "8 semestre",
-                  text: "Os casos clínicos são muito bem elaborados. Estou me preparando melhor para o internato.",
-                  rating: 5,
-                },
-                {
-                  name: "Ana Beatriz",
-                  semester: "6 semestre",
-                  text: "Organizacao incrivel dos resumos. Economizei muito tempo de estudo. Recomendo demais!",
-                  rating: 5,
-                },
-              ].map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  variants={fadeInUp}
-                  className="p-6 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all"
-                >
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                      />
-                    ))}
-                  </div>
-                  <Quote className="w-8 h-8 text-primary/30 mb-4" />
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {testimonial.text}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary" />
-                    <div>
-                      <p className="font-medium text-sm">{testimonial.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {testimonial.semester}
-                      </p>
-                    </div>
-                  </div>
                 </motion.div>
               ))}
             </motion.div>

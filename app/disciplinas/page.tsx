@@ -7,7 +7,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { FilterBar } from "@/components/ui/search-filter";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useDisciplinasVitrine } from "@/lib/hooks/use-disciplinas-vitrine";
-import { useUniversidade, ehDisciplinaCDE, type Universidade } from "@/lib/hooks/use-universidade";
+import { useUniversidade, ehDisciplinaCDE } from "@/lib/providers/universidade-provider";
 import { accentForDisciplina } from "@/components/ui/content-card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -64,7 +64,7 @@ export default function DisciplinasPage() {
   useAuth(true);
   const [busca, setBusca] = useState("");
   const { disciplinas, isLoading, error, refetch } = useDisciplinasVitrine();
-  const { universidade, carregado, escolherUniversidade } = useUniversidade();
+  const { universidade, esquecerUniversidade } = useUniversidade();
 
   const disciplinasDaUniversidade = useMemo(() => {
     if (!universidade) return [];
@@ -118,53 +118,26 @@ export default function DisciplinasPage() {
   return (
     <AppLayout>
       <div className="p-4 lg:p-6 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <GraduationCap className="w-5 h-5 text-primary" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <GraduationCap className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl lg:text-2xl font-bold">Disciplinas</h1>
+              <p className="text-sm text-muted-foreground">
+                {universidade === "cde" ? "UCP — Ciudad del Este" : "Universidad Interamericana"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl lg:text-2xl font-bold">Disciplinas</h1>
-            <p className="text-sm text-muted-foreground">
-              Encontre sua disciplina e veja tudo que já está disponível
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-card border border-border w-fit">
           <button
-            onClick={() => escolherUniversidade("interamericana")}
-            className={cn(
-              "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
-              universidade === "interamericana"
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
+            onClick={esquecerUniversidade}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2 flex-shrink-0"
           >
-            🎓 Universidad Interamericana
-          </button>
-          <button
-            onClick={() => escolherUniversidade("cde")}
-            className={cn(
-              "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
-              universidade === "cde"
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            🏥 UCP — Ciudad del Este
+            Trocar universidade
           </button>
         </div>
 
-        {!carregado ? null : !universidade ? (
-          <div className="p-12 text-center rounded-xl bg-card border border-border">
-            <span className="text-3xl">👆</span>
-            <h3 className="font-semibold mt-3 mb-1">Escolha sua universidade acima</h3>
-            <p className="text-sm text-muted-foreground">
-              Pra ver as disciplinas certas pra você.
-            </p>
-          </div>
-        ) : (
-        <>
         {/* Ciclo — sempre um ativo, sem opção "Todos". Só aparece o
             alternador se houver mais de um ciclo nos dados reais. */}
         {ciclosDisponiveis.length > 1 && (
@@ -264,8 +237,6 @@ export default function DisciplinasPage() {
               </div>
             )}
           </div>
-        )}
-        </>
         )}
       </div>
     </AppLayout>

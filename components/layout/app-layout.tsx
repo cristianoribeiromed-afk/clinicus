@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { Sidebar, MobileSidebar, BottomNav } from "./sidebar";
 import { DashboardHeader } from "./header";
 import { WhatsAppButton } from "@/components/ui/whatsapp-button";
+import { UniversidadeGate } from "@/components/ui/universidade-gate";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -11,7 +12,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, showSidebar = true }: AppLayoutProps) {
-  return (
+  const conteudo = (
     <div className="min-h-screen bg-background">
       {showSidebar && (
         <>
@@ -28,11 +29,16 @@ export function AppLayout({ children, showSidebar = true }: AppLayoutProps) {
       </main>
 
       {showSidebar && <BottomNav />}
-      
+
       {/* Botão WhatsApp flutuante */}
       <WhatsAppButton />
     </div>
   );
+
+  // O portão só se aplica às páginas com sidebar (o app autenticado de
+  // verdade) -- não a páginas avulsas como checkout, que usam
+  // showSidebar={false} e não precisam saber de universidade nenhuma.
+  return showSidebar ? <UniversidadeGate>{conteudo}</UniversidadeGate> : conteudo;
 }
 
 export function LandingLayout({ children }: { children: ReactNode }) {

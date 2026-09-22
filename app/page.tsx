@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -42,6 +43,44 @@ const staggerContainer = {
     transition: { staggerChildren: 0.1 },
   },
 };
+
+// "Demo viva" -- não é dado de ninguém, é uma demonstração de como a
+// interação funciona (o mesmo espírito do link "Ver simulado demo" já
+// existente). Vira sozinho, em loop lento, pra dar o "efeito uau em 5
+// segundos" sem precisar de vídeo nem GIF -- ver docs/PRODUCT-DESIGN-BIBLE.md
+// §6, item liberado por não depender de progresso real de aluno nenhum.
+function FlashcardDemo() {
+  const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    const ciclo = setInterval(() => setFlipped((f) => !f), 3200);
+    return () => clearInterval(ciclo);
+  }, []);
+
+  return (
+    <div className="hidden sm:block absolute -bottom-8 -right-6 w-44 h-28 [perspective:1000px] z-10">
+      <span className="absolute -top-6 left-0 text-[11px] font-medium text-primary-light uppercase tracking-wide">
+        Flashcards
+      </span>
+      <motion.div
+        className="relative w-full h-full [transform-style:preserve-3d]"
+        animate={{ rotateY: flipped ? 180 : 0, rotate: -4 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
+        <div className="absolute inset-0 [backface-visibility:hidden] rounded-lg bg-card border border-border-strong shadow-card p-3 flex items-center justify-center text-center">
+          <p className="text-xs font-medium text-foreground">
+            O que causa a Tríade de Cushing?
+          </p>
+        </div>
+        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-lg bg-primary/10 border border-primary/30 p-3 flex items-center justify-center text-center">
+          <p className="text-[11px] text-muted-foreground">
+            Hipertensão + bradicardia + respiração irregular
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const { semestres: semestresReais } = useDisciplinasReais();
@@ -159,8 +198,9 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="mt-16 max-w-3xl mx-auto"
+              className="relative mt-16 max-w-3xl mx-auto"
             >
+              <FlashcardDemo />
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}

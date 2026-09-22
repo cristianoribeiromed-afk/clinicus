@@ -104,8 +104,8 @@ export default function ResumoPage() {
               key="iframe"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="rounded-xl overflow-hidden border border-border bg-white"
-              style={{ height: "calc(100vh - 130px)", minHeight: 600 }}
+              className="rounded-lg overflow-hidden bg-background"
+              style={{ height: "calc(100vh - 90px)", minHeight: 600 }}
             >
               <iframe
                 src={content.file_url}

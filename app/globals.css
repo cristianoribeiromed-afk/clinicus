@@ -4,38 +4,26 @@
 
 @layer base {
   :root {
-    /* ClinicusMed Design System v2 (Premium) -- portado do site estático
-       (resumos-clinicus/css/variables.css) pra manter a mesma identidade
-       de marca nos dois produtos. Preto quase puro + verde + dourado,
-       não o teal/azul da tentativa anterior. */
-    --background: #030707;
-    --sidebar: #0A0D0D;
-    --foreground: #FFFFFF;
-    --card: #0F1115;
-    --card-foreground: #FFFFFF;
-    --popover: #0F1115;
-    --popover-foreground: #FFFFFF;
-    --primary: #1DB954;
-    --primary-light: #7DFFC1;
-    --primary-foreground: #04140A;
-    --secondary: #D8A53B;
-    --secondary-foreground: #1A1200;
-    --muted: #0F1115;
-    --muted-foreground: #A5A5A5;
-    --accent: #1DB954;
-    --accent-foreground: #04140A;
+    --background: #060B14;
+    --foreground: #F1F5F9;
+    --card: rgba(255,255,255,0.05);
+    --card-foreground: #F1F5F9;
+    --popover: rgba(255,255,255,0.05);
+    --popover-foreground: #F1F5F9;
+    --primary: #3B82F6;
+    --primary-foreground: #FFFFFF;
+    --secondary: #10B981;
+    --secondary-foreground: #FFFFFF;
+    --muted: rgba(255,255,255,0.05);
+    --muted-foreground: #94A3B8;
+    --accent: #3B82F6;
+    --accent-foreground: #FFFFFF;
     --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
-    --success: #22C55E;
-    --warning: #F59E0B;
-    --purple: #8B5CF6;
-    --border: rgba(255,255,255,0.08);
-    --border-strong: rgba(255,255,255,0.14);
-    --surface-2: #171A20;
-    --surface-hover: #171A20;
-    --input: #0F1115;
-    --ring: #1DB954;
-    --radius: 1.5rem;
+    --border: rgba(255,255,255,0.12);
+    --input: rgba(255,255,255,0.05);
+    --ring: #3B82F6;
+    --radius: 0.75rem;
   }
 }
 
@@ -94,7 +82,7 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(29,185,84,0.3), rgba(216,165,59,0.3));
+    background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(16,185,129,0.3));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;

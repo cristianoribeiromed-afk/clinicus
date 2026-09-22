@@ -10,70 +10,55 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#030707",
-        sidebar: "#0A0D0D",
-        foreground: "#FFFFFF",
+        background: "#060B14",
+        foreground: "#F1F5F9",
         card: {
-          DEFAULT: "#0F1115",
-          foreground: "#FFFFFF",
+          DEFAULT: "rgba(255,255,255,0.03)",
+          foreground: "#F1F5F9",
         },
         popover: {
-          DEFAULT: "#0F1115",
-          foreground: "#FFFFFF",
+          DEFAULT: "rgba(255,255,255,0.05)",
+          foreground: "#F1F5F9",
         },
         primary: {
-          DEFAULT: "#1DB954",
-          light: "#7DFFC1",
-          foreground: "#04140A",
+          DEFAULT: "#3B82F6",
+          foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#D8A53B",
-          foreground: "#1A1200",
+          DEFAULT: "#10B981",
+          foreground: "#FFFFFF",
         },
         muted: {
-          DEFAULT: "#0F1115",
-          foreground: "#A5A5A5",
+          DEFAULT: "rgba(255,255,255,0.05)",
+          foreground: "#94A3B8",
         },
         accent: {
-          DEFAULT: "#1DB954",
-          foreground: "#04140A",
+          DEFAULT: "#3B82F6",
+          foreground: "#FFFFFF",
         },
         destructive: {
           DEFAULT: "#EF4444",
           foreground: "#FFFFFF",
         },
-        success: {
-          DEFAULT: "#22C55E",
-          foreground: "#FFFFFF",
-        },
-        warning: {
-          DEFAULT: "#F59E0B",
-          foreground: "#FFFFFF",
-        },
-        purple: "#8B5CF6",
         border: "rgba(255,255,255,0.08)",
-        "border-strong": "rgba(255,255,255,0.14)",
-        "surface-2": "#171A20",
-        "surface-hover": "#171A20",
-        input: "#0F1115",
-        ring: "#1DB954",
+        input: "rgba(255,255,255,0.05)",
+        ring: "#3B82F6",
         chart: {
-          "1": "#1DB954",
-          "2": "#3B82F6",
-          "3": "#D8A53B",
+          "1": "#3B82F6",
+          "2": "#10B981",
+          "3": "#F59E0B",
           "4": "#EF4444",
           "5": "#8B5CF6",
         },
       },
       borderRadius: {
-        lg: "1.5rem",
-        md: "1.125rem",
-        sm: "0.75rem",
+        lg: "0.75rem",
+        md: "0.5rem",
+        sm: "0.25rem",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         heading: ["Geist", "Inter", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "Cormorant Garamond", "Georgia", "serif"],
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -82,14 +67,12 @@ const config: Config = {
         "gradient-dark":
           "linear-gradient(135deg, #0A0A0F 0%, #1a1a2e 50%, #0A0A0F 100%)",
         "gradient-hero":
-          "linear-gradient(135deg, rgba(29,185,84,0.14) 0%, rgba(216,165,59,0.05) 50%, transparent 100%)",
+          "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.05) 50%, transparent 100%)",
       },
       boxShadow: {
-        glow: "0 0 20px rgba(29,185,84,0.3)",
-        "glow-lg": "0 0 60px rgba(29,185,84,0.18)",
-        "glow-secondary": "0 0 60px rgba(216,165,59,0.16)",
-        card: "0 30px 80px rgba(0,0,0,0.35)",
-        "card-hover": "0 40px 100px rgba(0,0,0,0.45)",
+        glow: "0 0 20px rgba(59,130,246,0.3)",
+        "glow-lg": "0 0 30px rgba(59,130,246,0.4)",
+        "glow-secondary": "0 0 20px rgba(16,185,129,0.3)",
       },
       animation: {
         "fade-in-up": "fade-in-up 0.5s ease-out",

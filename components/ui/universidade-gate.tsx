@@ -15,13 +15,13 @@ const OPCOES: Array<{
     valor: "interamericana",
     nome: "Universidad Interamericana",
     icon: GraduationCap,
-    accent: "#1DB954",
+    accent: "#3B82F6",
   },
   {
     valor: "cde",
     nome: "UCP — Ciudad del Este",
     icon: Stethoscope,
-    accent: "#D8A53B",
+    accent: "#10B981",
   },
 ];
 

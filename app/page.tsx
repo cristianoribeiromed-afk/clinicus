@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -13,9 +12,9 @@ import {
   Clock,
   BarChart3,
   BookOpen,
+  ChevronDown,
   ArrowRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -44,44 +43,6 @@ const staggerContainer = {
   },
 };
 
-// "Demo viva" -- não é dado de ninguém, é uma demonstração de como a
-// interação funciona (o mesmo espírito do link "Ver simulado demo" já
-// existente). Vira sozinho, em loop lento, pra dar o "efeito uau em 5
-// segundos" sem precisar de vídeo nem GIF -- ver docs/PRODUCT-DESIGN-BIBLE.md
-// §6, item liberado por não depender de progresso real de aluno nenhum.
-function FlashcardDemo() {
-  const [flipped, setFlipped] = useState(false);
-
-  useEffect(() => {
-    const ciclo = setInterval(() => setFlipped((f) => !f), 3200);
-    return () => clearInterval(ciclo);
-  }, []);
-
-  return (
-    <div className="hidden sm:block absolute -bottom-8 -right-6 w-44 h-28 [perspective:1000px] z-10">
-      <span className="absolute -top-6 left-0 text-[11px] font-medium text-primary-light uppercase tracking-wide">
-        Flashcards
-      </span>
-      <motion.div
-        className="relative w-full h-full [transform-style:preserve-3d]"
-        animate={{ rotateY: flipped ? 180 : 0, rotate: -4 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
-      >
-        <div className="absolute inset-0 [backface-visibility:hidden] rounded-lg bg-card border border-border-strong shadow-card p-3 flex items-center justify-center text-center">
-          <p className="text-xs font-medium text-foreground">
-            O que causa a Tríade de Cushing?
-          </p>
-        </div>
-        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-lg bg-primary/10 border border-primary/30 p-3 flex items-center justify-center text-center">
-          <p className="text-[11px] text-muted-foreground">
-            Hipertensão + bradicardia + respiração irregular
-          </p>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
 export default function LandingPage() {
   const { semestres: semestresReais } = useDisciplinasReais();
   const disciplinasReais = semestresReais.flatMap((s) => s.disciplinas);
@@ -107,57 +68,64 @@ export default function LandingPage() {
       <Header />
       <main className="min-h-screen">
         {/* Hero Section */}
-        <section className="relative flex items-center justify-center overflow-hidden pt-40 pb-24 px-4 sm:px-6 lg:px-8">
-          {/* Um único brilho verde suave atrás do título -- não dois blobs
-              competindo entre si, mesmo padrão do ClinicusMed
-              (css/components.css, .cx-hero::before). */}
-          <div
-            className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full bg-primary/[0.14] blur-[120px] pointer-events-none"
-            aria-hidden
-          />
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-dark">
+            <div className="absolute inset-0 bg-gradient-hero opacity-50" />
+            <motion.div
+              animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-primary/20 blur-3xl"
+            />
+            <motion.div
+              animate={{ x: [0, -40, 0], y: [0, 40, 0] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute bottom-1/4 right-1/4 w-72 h-72 rounded-full bg-secondary/20 blur-3xl"
+            />
+          </div>
 
-          <div className="relative z-10 max-w-5xl mx-auto text-center">
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
-              className="space-y-7"
+              className="space-y-8"
             >
               <motion.div variants={fadeInUp}>
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-xs font-semibold uppercase tracking-wider text-primary-light">
-                  <Stethoscope className="w-3.5 h-3.5" />
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
+                  <Stethoscope className="w-4 h-4" />
                   Feito para estudantes de Medicina
                 </span>
               </motion.div>
 
               <motion.h1
                 variants={fadeInUp}
-                className="font-display font-semibold text-5xl md:text-6xl lg:text-7xl leading-[1.1] max-w-3xl mx-auto"
+                className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
               >
-                Sua graduação em Medicina,{" "}
-                <em className="not-italic italic bg-gradient-to-r from-primary-light to-primary bg-clip-text text-transparent">
-                  organizada
-                </em>{" "}
-                em um só lugar
+                <span className="text-gradient">Clinicus</span>
+                <br />
+                <span className="text-foreground">
+                  Estude mais inteligente,
+                </span>
+                <br />
+                <span className="text-foreground">passe mais rápido</span>
               </motion.h1>
 
               <motion.p
                 variants={fadeInUp}
-                className="max-w-xl mx-auto text-lg text-muted-foreground"
+                className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground"
               >
                 Resumos organizados, simulados com gabarito e casos clínicos
-                comentados. Ciclo básico e ciclo clínico, do jeito que sua
-                graduação realmente acontece.
+                comentados. Tudo que você precisa em um só lugar.
               </motion.p>
 
               <motion.div
                 variants={fadeInUp}
-                className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2"
+                className="flex flex-col sm:flex-row gap-4 justify-center items-center"
               >
                 <Link href="/login">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-secondary to-[#F0C56A] text-secondary-foreground hover:opacity-90 gap-2 px-8 shadow-glow-secondary font-semibold rounded-full"
+                    className="bg-primary hover:bg-primary/90 text-white gap-2 px-8"
                   >
                     Começar grátis
                     <ArrowRight className="w-5 h-5" />
@@ -167,17 +135,17 @@ export default function LandingPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-border-strong bg-transparent hover:bg-white/[0.06] hover:border-primary-light gap-2 rounded-full"
+                    className="border-border bg-card/50 hover:bg-card gap-2"
                   >
                     <Play className="w-5 h-5" />
-                    Ver simulado demo
+                    Ver Simulado Demo
                   </Button>
                 </Link>
               </motion.div>
 
               <motion.div
                 variants={fadeInUp}
-                className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground pt-4"
               >
                 <Users className="w-4 h-4" />
                 <span>
@@ -190,86 +158,19 @@ export default function LandingPage() {
               </motion.div>
             </motion.div>
 
-            {/* Mockup flutuante do produto -- não é ilustração genérica de
-                banco de imagem, é o próprio Clinicus (sidebar, cards),
-                com os números reais já calculados acima. Mesmo padrão do
-                ClinicusMed (.cx-mockup, animação de flutuar 6s). */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="relative mt-16 max-w-3xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="absolute bottom-8 left-1/2 -translate-x-1/2"
             >
-              <FlashcardDemo />
               <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                className="rounded-lg overflow-hidden bg-card border border-border-strong shadow-card-hover text-left"
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="flex flex-col items-center gap-2 text-muted-foreground"
               >
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                </div>
-                <div className="flex min-h-[280px]">
-                  <div className="hidden sm:flex w-40 flex-shrink-0 flex-col gap-1 border-r border-border bg-surface-2 p-3">
-                    {["Início", "Disciplinas", "Simulados", "Casos clínicos"].map(
-                      (item, i) => (
-                        <div
-                          key={item}
-                          className={cn(
-                            "px-2.5 py-2 rounded-md text-xs",
-                            i === 1
-                              ? "bg-primary/10 text-primary-light font-semibold"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {item}
-                        </div>
-                      ),
-                    )}
-                  </div>
-                  <div className="flex-1 p-6 space-y-4">
-                    <h4 className="font-display text-2xl text-foreground">
-                      Ciclo Básico · Ciclo Clínico
-                    </h4>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="rounded-md border border-border bg-white/[0.02] p-3">
-                        <span className="block text-[11px] text-muted-foreground mb-1">
-                          Resumos
-                        </span>
-                        <span className="font-display text-2xl text-foreground">
-                          {totais.resumos}
-                        </span>
-                        <div className="h-1.5 rounded-full bg-surface-2 mt-2 overflow-hidden">
-                          <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-primary to-primary-light" />
-                        </div>
-                      </div>
-                      <div className="rounded-md border border-border bg-white/[0.02] p-3">
-                        <span className="block text-[11px] text-muted-foreground mb-1">
-                          Casos clínicos
-                        </span>
-                        <span className="font-display text-2xl text-foreground">
-                          {totais.casos}
-                        </span>
-                        <div className="h-1.5 rounded-full bg-surface-2 mt-2 overflow-hidden">
-                          <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-primary to-primary-light" />
-                        </div>
-                      </div>
-                      <div className="rounded-md border border-border bg-white/[0.02] p-3">
-                        <span className="block text-[11px] text-muted-foreground mb-1">
-                          Simulados
-                        </span>
-                        <span className="font-display text-2xl text-foreground">
-                          {totais.simulados}
-                        </span>
-                        <div className="h-1.5 rounded-full bg-surface-2 mt-2 overflow-hidden">
-                          <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-primary to-primary-light" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <span className="text-xs">Explore mais</span>
+                <ChevronDown className="w-5 h-5" />
               </motion.div>
             </motion.div>
           </div>

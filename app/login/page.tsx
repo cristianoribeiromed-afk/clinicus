@@ -47,7 +47,7 @@ function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { setUser, setProfile } = useAuthStore();
+  const { setUser } = useAuthStore();
   const [isRegister, setIsRegister] = useState(
     searchParams.get("register") === "true",
   );
@@ -76,12 +76,11 @@ function AuthContent() {
 
       if (authData.user) {
         setUser(authData.user);
-        const { data: profileData } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", authData.user.id)
-          .maybeSingle();
-        setProfile(profileData);
+        // Não busca o perfil aqui e espera terminar antes de redirecionar --
+        // o Dashboard (destino) já faz essa mesma busca sozinho, de forma
+        // independente. Esperar aqui só adicionava uma consulta redundante
+        // no caminho mais crítico do app (o login em si), e era ela que
+        // ficava presa em "Entrando..." quando a rede estava mais lenta.
         toast({
           title: "Bem-vindo de volta!",
           description: "Login realizado com sucesso.",
@@ -115,12 +114,8 @@ function AuthContent() {
 
       if (authData.user) {
         setUser(authData.user);
-        const { data: profileData } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", authData.user.id)
-          .maybeSingle();
-        setProfile(profileData);
+        // Mesmo motivo do login: não espera essa busca redundante antes
+        // de redirecionar -- o Dashboard já busca o perfil sozinho.
         toast({
           title: "Conta criada com sucesso!",
           description: "Bem-vindo ao Clinicus!",

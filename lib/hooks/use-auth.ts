@@ -12,10 +12,22 @@ export function useAuth(requireAuth = false) {
     useAuthStore();
   const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  // Guarda o id do último usuário cujo perfil já foi buscado (com sucesso
+  // ou tentado) -- evita a segunda chamada redundante. O Supabase dispara
+  // onAuthStateChange imediatamente ao se inscrever, com o estado atual da
+  // sessão -- então initAuth() (getSession manual) e esse listener disparam
+  // fetchProfile pro MESMO usuário, quase ao mesmo tempo, em todo
+  // carregamento de página. A primeira chamada terminava rápido; a segunda,
+  // redundante, era a que ficava presa nos 8-10s de timeout.
+  const ultimoPerfilBuscado = useRef<string | null>(null);
 
   // Fetch user profile from database
   const fetchProfile = useCallback(
     async (userId: string) => {
+      if (ultimoPerfilBuscado.current === userId) {
+        return;
+      }
+      ultimoPerfilBuscado.current = userId;
       try {
         const { data, error } = await loggedQuery(
           "useAuth: buscar perfil do usuário",
@@ -28,6 +40,10 @@ export function useAuth(requireAuth = false) {
       } catch (error) {
         console.error("Error fetching profile:", error);
         setProfile(null);
+        // Permite tentar de novo numa próxima chamada, já que esta falhou.
+        if (ultimoPerfilBuscado.current === userId) {
+          ultimoPerfilBuscado.current = null;
+        }
         // PGRST303 = "JWT issued at future" -- o relógio do dispositivo
         // do aluno está adiantado em relação ao servidor, o token é
         // rejeitado por segurança. Sem esse tratamento, a tela ficava

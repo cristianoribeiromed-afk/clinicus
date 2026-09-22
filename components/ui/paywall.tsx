@@ -37,8 +37,8 @@ export function Paywall({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          "relative z-20 p-8 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-primary/20",
-          showOverlay && "absolute inset-0 m-auto h-fit max-w-md",
+          "relative z-20 p-8 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-primary/20 max-w-md mx-auto",
+          showOverlay && "absolute inset-0 m-auto h-fit",
         )}
       >
         <div className="text-center">

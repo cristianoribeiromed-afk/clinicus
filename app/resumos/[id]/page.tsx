@@ -92,6 +92,7 @@ export default function ResumoPage() {
                 title="Resumo Premium"
                 description="Este resumo interativo completo está disponível para assinantes."
                 ctaText="Assinar para Acessar"
+                showOverlay={false}
               />
             </motion.div>
           ) : content.file_url ? (

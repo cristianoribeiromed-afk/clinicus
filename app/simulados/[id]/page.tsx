@@ -234,6 +234,7 @@ function SimuladoContent() {
                 title="Simulado Premium"
                 description="Este simulado exclusivo possui Questões selecionadas e gabarito comentado detalhado."
                 ctaText="Assinar para Acessar"
+                showOverlay={false}
               />
             </motion.div>
           ) : !isRunning && !showResult ? (

@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/hooks/use-auth";
 import { useContentAccess } from "@/lib/hooks/use-content";
 import { ContentSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function ResumoPage() {
@@ -50,32 +50,27 @@ export default function ResumoPage() {
 
   return (
     <AppLayout>
-      <div className="p-3 lg:p-4 space-y-3">
-        {/* Barra fina: voltar + disciplina, uma linha só */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center justify-between gap-3"
+      <div className="relative p-2 lg:p-3">
+        {/* "Voltar" flutua sobre o conteúdo em vez de ocupar uma barra
+            inteira própria -- o conteúdo embutido já tem seu próprio
+            cabeçalho completo (Sair do modo leitura, tema, etc.); duas
+            barras de topo lado a lado é o que mais dava a sensação de
+            "duas coisas empilhadas". Isso vira só um botão pequeno no
+            canto, não mais uma faixa competindo com a deles. */}
+        <Link
+          href="/resumos"
+          className="absolute top-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border text-xs text-muted-foreground hover:text-foreground hover:border-white/20 transition-colors"
         >
-          <Link
-            href="/resumos"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </Link>
-          <span className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5" />
-            {content.disciplina}
-          </span>
-        </motion.div>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Voltar
+        </Link>
 
         {/* Título só aparece quando não há HTML embutido (que já traz o próprio) */}
         {!temConteudoProprio && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-2"
+            className="space-y-2 pt-12"
           >
             <h1 className="text-2xl lg:text-3xl font-bold">{content.titulo}</h1>
             {content.descricao && (
@@ -105,7 +100,7 @@ export default function ResumoPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="rounded-lg overflow-hidden bg-background"
-              style={{ height: "calc(100vh - 90px)", minHeight: 600 }}
+              style={{ height: "calc(100vh - 70px)", minHeight: 600 }}
             >
               <iframe
                 src={content.file_url}

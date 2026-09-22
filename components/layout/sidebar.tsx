@@ -20,12 +20,12 @@ import {
   Shield,
   GraduationCap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { APP_CONFIG } from "@/lib/config";
-import { useDisciplinasReais } from "@/lib/hooks/use-disciplinas";
+import { useDisciplinasVitrine } from "@/lib/hooks/use-disciplinas-vitrine";
 
 // Grupo principal: como o aluno chega ao conteúdo. "Disciplinas" é a
 // vitrine (Entrega 1) -- o ponto de entrada agora, no lugar de "Resumos"
@@ -355,10 +355,35 @@ export function BottomNav() {
  * Ver IDENTIDADE_CLINICUS.md.
  */
 function SemestresReais({ pathname }: { pathname: string }) {
-  const { semestres, isLoading } = useDisciplinasReais();
-  const [expandido, setExpandido] = useState<string | null>(
-    semestres[0]?.semestre ?? null,
-  );
+  const { disciplinas, isLoading } = useDisciplinasVitrine();
+
+  // Mesma agregação real usada em /disciplinas -- ciclo → semestre →
+  // disciplinas, sem inventar nada; um ciclo só aparece aqui se tiver
+  // pelo menos uma disciplina classificada de verdade.
+  const ciclos = useMemo(() => {
+    const porCiclo = new Map<string, Map<number, string[]>>();
+    for (const d of disciplinas) {
+      if (!d.ciclo) continue;
+      if (!porCiclo.has(d.ciclo)) porCiclo.set(d.ciclo, new Map());
+      const porSemestre = porCiclo.get(d.ciclo)!;
+      if (!porSemestre.has(d.numeroSemestre)) porSemestre.set(d.numeroSemestre, []);
+      porSemestre.get(d.numeroSemestre)!.push(d.disciplina);
+    }
+    return Array.from(porCiclo.entries())
+      .sort(([a], [b]) => (a === "básico" ? -1 : 1))
+      .map(([ciclo, porSemestre]) => ({
+        ciclo,
+        semestres: Array.from(porSemestre.entries())
+          .sort(([a], [b]) => a - b)
+          .map(([numero, nomes]) => ({
+            numero,
+            disciplinas: [...nomes].sort((a, b) => a.localeCompare(b, "pt-BR")),
+          })),
+      }));
+  }, [disciplinas]);
+
+  const [cicloAberto, setCicloAberto] = useState<string | null>(null);
+  const [semestreAberto, setSemestreAberto] = useState<number | null>(null);
 
   if (isLoading) {
     return (
@@ -372,42 +397,77 @@ function SemestresReais({ pathname }: { pathname: string }) {
 
   return (
     <>
-      {semestres.map((sem) => {
-        const aberto = expandido === sem.semestre;
+      {ciclos.map(({ ciclo, semestres }) => {
+        const cicloEstaAberto = cicloAberto === ciclo || (cicloAberto === null && ciclos[0]?.ciclo === ciclo);
         return (
-          <div key={sem.semestre} className="pt-2">
+          <div key={ciclo} className="pt-2">
             <button
-              onClick={() => setExpandido(aberto ? null : sem.semestre)}
+              onClick={() => {
+                setCicloAberto(cicloEstaAberto ? "" : ciclo);
+                setSemestreAberto(null);
+              }}
               className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
             >
-              <span className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                {sem.numero}º Semestre
+              <span className="flex items-center gap-2 capitalize">
+                <GraduationCap className="w-4 h-4" />
+                Ciclo {ciclo}
               </span>
               <ChevronDown
                 className={cn(
                   "w-4 h-4 transition-transform",
-                  aberto && "rotate-180",
+                  cicloEstaAberto && "rotate-180",
                 )}
               />
             </button>
-            {aberto && (
+            {cicloEstaAberto && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
-                className="mt-1 space-y-0.5 pl-2"
+                className="pl-2"
               >
-                {sem.disciplinas.map((d) => {
-                  const href = `/disciplinas/${encodeURIComponent(d.disciplina)}`;
+                {semestres.map((sem) => {
+                  const semEstaAberto = semestreAberto === sem.numero;
                   return (
-                    <Link
-                      key={d.disciplina}
-                      href={href}
-                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-card hover:text-foreground transition-all"
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0" />
-                      <span className="truncate">{d.disciplina}</span>
-                    </Link>
+                    <div key={sem.numero} className="pt-1">
+                      <button
+                        onClick={() =>
+                          setSemestreAberto(semEstaAberto ? null : sem.numero)
+                        }
+                        className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-muted-foreground/80 hover:text-foreground transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          {sem.numero}º Semestre
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "w-3.5 h-3.5 transition-transform",
+                            semEstaAberto && "rotate-180",
+                          )}
+                        />
+                      </button>
+                      {semEstaAberto && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          className="mt-0.5 space-y-0.5 pl-3"
+                        >
+                          {sem.disciplinas.map((nome) => {
+                            const href = `/disciplinas/${encodeURIComponent(nome)}`;
+                            return (
+                              <Link
+                                key={nome}
+                                href={href}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-card hover:text-foreground transition-all"
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0" />
+                                <span className="truncate">{nome}</span>
+                              </Link>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </div>
                   );
                 })}
               </motion.div>

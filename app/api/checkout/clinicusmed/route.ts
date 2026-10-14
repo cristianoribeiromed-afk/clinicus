@@ -22,6 +22,8 @@ const ALLOWED_ORIGINS = [
   "https://clinicusmed.com.br",
   "https://www.clinicusmed.com.br",
   "https://cristianoribeiromed-afk.github.io",
+  // Endereço de teste do porteiro na Cloudflare (antes da troca do domínio)
+  "https://resumos-clinicus.cristianoribeiromed.workers.dev",
 ];
 
 function corsHeaders(origin: string | null) {

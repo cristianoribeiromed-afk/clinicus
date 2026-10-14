@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import crypto from "node:crypto";
+import { obterTabelaPrecos, valorPagoCobre } from "@/lib/clinicusmed-precos";
 
 /**
  * Verifica a assinatura do webhook do Mercado Pago (x-signature).
@@ -10,11 +11,9 @@ import crypto from "node:crypto";
  * Formato do header x-signature: "ts=1704908010,v1=618c853452..."
  * O "manifest" assinado é: id:{dataId};request-id:{xRequestId};ts:{ts};
  *
- * Se MERCADOPAGO_WEBHOOK_SECRET não estiver configurada, a verificação
- * é PULADA (com log de aviso) em vez de bloquear o webhook inteiro —
- * isso permite configurar o secret no painel do Mercado Pago e na
- * Vercel sem quebrar pagamentos no meio do caminho. Depois que a
- * variável existir, a verificação passa a ser obrigatória.
+ * A verificação é OBRIGATÓRIA: sem MERCADOPAGO_WEBHOOK_SECRET configurada,
+ * toda notificação é recusada (erro alto no log). Antes ela era pulada,
+ * o que deixava o endpoint aberto a chamadas forjadas.
  */
 function verificarAssinaturaWebhook(
   xSignature: string | null,
@@ -23,10 +22,10 @@ function verificarAssinaturaWebhook(
 ): { valido: boolean; motivo?: string } {
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
   if (!secret) {
-    console.warn(
-      "MERCADOPAGO_WEBHOOK_SECRET não configurada — pulando verificação de assinatura. Configure o secret no painel do Mercado Pago (Webhooks > Configurar assinatura secreta) e na Vercel assim que possível.",
+    console.error(
+      "MERCADOPAGO_WEBHOOK_SECRET não configurada — notificação RECUSADA. Configure o secret no painel do Mercado Pago (Webhooks > Assinatura secreta) e na Vercel.",
     );
-    return { valido: true, motivo: "secret_nao_configurado" };
+    return { valido: false, motivo: "secret_nao_configurado" };
   }
 
   if (!xSignature || !xRequestId || !dataId) {
@@ -111,6 +110,7 @@ async function sincronizarPlanilhaAcessos(params: {
   nome: string | null;
   origem: string;
   idTransacao: string;
+  ativo?: boolean;
 }) {
   const url = process.env.APPS_SCRIPT_WEBHOOK_URL;
   const secret = process.env.APPS_SCRIPT_SECRET;
@@ -131,7 +131,7 @@ async function sincronizarPlanilhaAcessos(params: {
         email: params.email,
         plano: params.plano,
         nome: params.nome,
-        ativo: true,
+        ativo: params.ativo ?? true,
         origem: params.origem,
         idTransacao: params.idTransacao,
       }),
@@ -218,14 +218,66 @@ export async function POST(request: NextRequest) {
       // checkout em /api/checkout/clinicusmed)
       const meta = payment.metadata || {};
       if (meta.email && meta.plano) {
-        if (payment.status !== "approved") {
-          return NextResponse.json({ received: true, origem: "clinicusmed", status: payment.status });
-        }
-
         const email = String(meta.email).toLowerCase().trim();
         const plano = String(meta.plano);
         const nome = meta.nome ? String(meta.nome) : null;
         const idTransacao = String(payment.id);
+
+        // Estorno, chargeback ou cancelamento: revoga o acesso que ESTA
+        // transação liberou (não mexe em acesso liberado por outra compra).
+        if (["refunded", "charged_back", "cancelled"].includes(payment.status)) {
+          const { data: revogados, error: revogaErro } = await supabase
+            .from("access_sync")
+            .update({ ativo: false })
+            .eq("email", email)
+            .eq("plano", plano)
+            .eq("id_transacao", idTransacao)
+            .select("email");
+          if (revogaErro) {
+            console.error("Erro ao revogar acesso ClinicusMed:", revogaErro);
+            return NextResponse.json({ error: "Erro ao revogar acesso." }, { status: 500 });
+          }
+          if (revogados && revogados.length > 0) {
+            console.warn("Acesso ClinicusMed revogado:", { plano, idTransacao, status: payment.status });
+            await sincronizarPlanilhaAcessos({ email, plano, nome, origem: `mercadopago-${payment.status}`, idTransacao, ativo: false });
+          }
+          return NextResponse.json({ received: true, origem: "clinicusmed", acessoRevogado: (revogados?.length ?? 0) > 0 });
+        }
+
+        if (payment.status !== "approved") {
+          return NextResponse.json({ received: true, origem: "clinicusmed", status: payment.status });
+        }
+
+        // Confere o VALOR pago contra o preço do produto. Aceita o menor
+        // entre o preço atual do catálogo e o preço gravado pelo servidor
+        // no checkout (metadata.preco_esperado) — assim um reajuste de
+        // preço não prejudica quem já estava pagando.
+        let precoCatalogo: number | null = null;
+        try {
+          precoCatalogo = (await obterTabelaPrecos()).get(plano)?.preco ?? null;
+        } catch (e) {
+          console.error("Catálogo indisponível ao validar pagamento:", e);
+        }
+        const precoMeta = typeof meta.preco_esperado === "number" && meta.preco_esperado > 0 ? meta.preco_esperado : null;
+        const candidatos = [precoCatalogo, precoMeta].filter((p): p is number => p !== null);
+        if (candidatos.length === 0) {
+          // Sem como saber o preço agora: devolve erro para o Mercado Pago
+          // reenviar a notificação mais tarde, em vez de liberar às cegas.
+          console.error("Sem preço de referência para validar pagamento ClinicusMed:", { plano, idTransacao });
+          return NextResponse.json({ error: "Preço de referência indisponível." }, { status: 503 });
+        }
+        const precoMinimo = Math.min(...candidatos);
+        if (payment.currency_id !== "BRL" || !valorPagoCobre(payment.transaction_amount, precoMinimo)) {
+          console.error("PAGAMENTO COM VALOR INCOMPATÍVEL — acesso NÃO liberado:", {
+            plano,
+            idTransacao,
+            pago: payment.transaction_amount,
+            moeda: payment.currency_id,
+            esperado: precoMinimo,
+          });
+          // 200 de propósito: não adianta o Mercado Pago reenviar.
+          return NextResponse.json({ received: true, origem: "clinicusmed", acessoLiberado: false, motivo: "valor_incompativel" });
+        }
 
         const { data: existente } = await supabase
           .from("access_sync")
@@ -274,7 +326,7 @@ export async function POST(request: NextRequest) {
           idTransacao,
         });
 
-        return NextResponse.json({ received: true, origem: "clinicusmed", acessoLiberado: true, email, plano });
+        return NextResponse.json({ received: true, origem: "clinicusmed", acessoLiberado: true });
       }
 
       return NextResponse.json(

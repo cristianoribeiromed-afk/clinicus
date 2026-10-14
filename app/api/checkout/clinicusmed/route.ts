@@ -13,6 +13,7 @@
 //   CLINICUSMED_SITE_URL       (ex: https://clinicusmed.com.br)
 
 import { NextRequest, NextResponse } from "next/server";
+import { obterTabelaPrecos } from "@/lib/clinicusmed-precos";
 
 // Origens autorizadas a chamar essa rota a partir do navegador do aluno.
 // O site estático do ClinicusMed roda em domínio diferente da API (Vercel),
@@ -45,7 +46,9 @@ interface CheckoutPayload {
   nome: string;
   plano: string;      // ex: "semestre-03-fisiologia-i-combo" — a mesma chave usada no catalogo.json
   itemNome: string;    // nome bonito pra mostrar no checkout, ex: "Combo 3º Semestre"
-  preco: number;
+  // O navegador ainda envia "preco", mas ele é IGNORADO: o preço cobrado
+  // sai sempre do catalogo.json, no servidor (lib/clinicusmed-precos.ts).
+  preco?: number;
 }
 
 function isValidPayload(body: unknown): body is CheckoutPayload {
@@ -55,8 +58,7 @@ function isValidPayload(body: unknown): body is CheckoutPayload {
     typeof b.email === "string" && b.email.includes("@") &&
     typeof b.nome === "string" && b.nome.length > 0 &&
     typeof b.plano === "string" && b.plano.length > 0 &&
-    typeof b.itemNome === "string" && b.itemNome.length > 0 &&
-    typeof b.preco === "number" && b.preco > 0
+    typeof b.itemNome === "string" && b.itemNome.length > 0
   );
 }
 
@@ -85,12 +87,38 @@ export async function POST(req: NextRequest) {
 
   if (!isValidPayload(body)) {
     return NextResponse.json(
-      { success: false, message: "Payload inválido. Campos obrigatórios: email, nome, plano, itemNome, preco." },
+      { success: false, message: "Payload inválido. Campos obrigatórios: email, nome, plano, itemNome." },
       { status: 400, headers: cors }
     );
   }
 
-  const { email, nome, plano, itemNome, preco } = body;
+  const email = body.email.trim().toLowerCase();
+  const nome = body.nome.trim().slice(0, 120);
+  const plano = body.plano.trim();
+  const itemNome = body.itemNome.trim().slice(0, 200);
+
+  // Preço definido pelo SERVIDOR a partir do catálogo publicado.
+  let preco: number;
+  try {
+    const produto = (await obterTabelaPrecos()).get(plano);
+    if (!produto) {
+      return NextResponse.json(
+        { success: false, message: "Produto não encontrado ou indisponível. Recarregue a página e tente de novo." },
+        { status: 400, headers: cors }
+      );
+    }
+    preco = produto.preco;
+  } catch (e) {
+    console.error("Não foi possível ler o catálogo de preços:", e);
+    return NextResponse.json(
+      { success: false, message: "Checkout temporariamente indisponível. Tente de novo em alguns minutos." },
+      { status: 503, headers: cors }
+    );
+  }
+  if (typeof body.preco === "number" && Math.abs(body.preco - preco) > 0.009) {
+    console.warn("Preço enviado pelo navegador diverge do catálogo (ignorado):", { plano, enviado: body.preco, catalogo: preco });
+  }
+
   const siteUrl = process.env.CLINICUSMED_SITE_URL || "https://clinicusmed.com.br";
 
   const preference = {
@@ -105,7 +133,9 @@ export async function POST(req: NextRequest) {
     payer: { email, name: nome },
     // metadata volta junto no objeto de pagamento quando o webhook dispara —
     // é assim que a gente sabe QUEM comprou O QUÊ, sem precisar de mais nada.
-    metadata: { email, nome, plano },
+    // preco_esperado é gravado pelo servidor (o comprador não consegue
+    // alterá-lo) e é conferido de novo no webhook.
+    metadata: { email, nome, plano, preco_esperado: preco },
     external_reference: `${plano}|${email}`, // identificador de reserva, redundante com o metadata
     back_urls: {
       success: `${siteUrl}/?pagamento=sucesso`,

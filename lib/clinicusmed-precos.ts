@@ -14,6 +14,9 @@
 //       preço = materia.comboGeralPreco (se comboGeralDisponivel)
 //   • Pacote do semestre <semestre>-pacote-<tipo>[-cde]
 //       preço = semestre.pacotes[tipo].preco (se disponivel)
+//   • Plano Anual        semestre-AA-BB-pacote-anual[-cde]
+//       preço = anuais.precoLancamento até anuais.lancamentoAte (inclusive,
+//       horário de Brasília); depois, anuais.preco
 //
 // Nenhum preço é alterado aqui: os valores vêm do catalogo.json.
 
@@ -38,9 +41,32 @@ type Semestre = {
   pacotes?: Record<string, { disponivel?: boolean; preco?: number | null } | null> | null;
 };
 
-export type Catalogo = { semestres: Semestre[] };
+type Anuais = {
+  disponivel?: boolean;
+  preco?: number | null;
+  precoLancamento?: number | null;
+  lancamentoAte?: string | null;
+  pares?: [number, number][] | null;
+} | null;
 
-export type ProdutoPreco = { plano: string; preco: number; tipo: "etapa" | "completo" | "pacote" };
+export type Catalogo = { semestres: Semestre[]; anuais?: Anuais };
+
+export type ProdutoPreco = { plano: string; preco: number; tipo: "etapa" | "completo" | "pacote" | "anual" };
+
+/** Data de hoje (AAAA-MM-DD) no horário de Brasília. */
+function hojeBrasilia(agora: Date): string {
+  return new Date(agora.getTime() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/** Mesma regra de precoAnualVigente() do index.html. */
+export function precoAnualVigente(an: NonNullable<Anuais>, agora = new Date()): number | null {
+  const lancamento = an.precoLancamento;
+  const ate = (an.lancamentoAte || "").trim();
+  if (precoValido(lancamento) && /^\d{4}-\d{2}-\d{2}$/.test(ate) && hojeBrasilia(agora) <= ate) return lancamento;
+  return precoValido(an.preco) ? an.preco : null;
+}
+
+const ehCDE = (nome: string) => /\bCDE\b/i.test(nome);
 
 // Mesmo slugify do index.html.
 export function slugify(str: string): string {
@@ -57,7 +83,7 @@ function precoValido(p: unknown): p is number {
 }
 
 /** Monta o mapa plano -> preço de todos os produtos que a loja oferece hoje. */
-export function montarTabelaPrecos(catalogo: Catalogo): Map<string, ProdutoPreco> {
+export function montarTabelaPrecos(catalogo: Catalogo, agora = new Date()): Map<string, ProdutoPreco> {
   const tabela = new Map<string, ProdutoPreco>();
   for (const sem of catalogo.semestres || []) {
     if (!sem || !sem.slug) continue;
@@ -88,6 +114,23 @@ export function montarTabelaPrecos(catalogo: Catalogo): Map<string, ProdutoPreco
       for (const plano of [`${sem.slug}-pacote-${tipo}`, `${sem.slug}-pacote-${tipo}-cde`]) {
         tabela.set(plano, { plano, preco: p.preco, tipo: "pacote" });
       }
+    }
+  }
+  // Plano Anual (2 semestres consecutivos)
+  const an = catalogo.anuais;
+  if (an && an.disponivel && Array.isArray(an.pares)) {
+    const preco = precoAnualVigente(an, agora);
+    const dd = (n: number) => String(n).padStart(2, "0");
+    const semestre = (n: number) => (catalogo.semestres || []).find((s) => s && s.slug === `semestre-${dd(n)}`);
+    for (const par of an.pares) {
+      if (!Array.isArray(par) || par.length !== 2 || !precoValido(preco)) continue;
+      const [a, b] = par;
+      const sa = semestre(a), sb = semestre(b);
+      if (!sa || !sb) continue; // a loja só mostra o card se os dois semestres existem
+      const base = `semestre-${dd(a)}-${dd(b)}-pacote-anual`;
+      tabela.set(base, { plano: base, preco, tipo: "anual" });
+      const temCDE = [sa, sb].some((s) => (s.materias || []).some((m) => m && ehCDE(m.nome)));
+      if (temCDE) tabela.set(`${base}-cde`, { plano: `${base}-cde`, preco, tipo: "anual" });
     }
   }
   return tabela;

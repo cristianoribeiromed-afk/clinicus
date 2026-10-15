@@ -37,7 +37,11 @@ const CATALOGO = {
       ],
       pacotes: { premium: { disponivel: true, preco: 149 }, p2: { disponivel: false, preco: 44.9 } },
     },
+    { slug: "semestre-02", materias: [{ nome: "Anatomía II", etapas: {} }], pacotes: {} },
+    { slug: "semestre-04", materias: [{ nome: "Fisiología II CDE", etapas: {} }], pacotes: {} },
+    { slug: "semestre-05", materias: [], pacotes: {} },
   ],
+  anuais: { disponivel: true, preco: 249, precoLancamento: 229, lancamentoAte: "", pares: [[1, 2], [4, 5], [7, 8]] },
 };
 
 // ---------- fetch simulado ----------
@@ -278,4 +282,34 @@ test("reenvio do mesmo pagamento aprovado é idempotente", async () => {
   await webhookPOST(reqWebhook("120"));
   assert.equal(accessSync.length, 1);
   assert.equal(accessSync[0].data_liberacao, data);
+});
+
+
+// ---------- Plano Anual ----------
+test("Plano Anual: preço normal e chave -cde só quando há matéria CDE", () => {
+  const t = precos.montarTabelaPrecos(CATALOGO as any);
+  assert.equal(t.get("semestre-01-02-pacote-anual")?.preco, 249);
+  assert.equal(t.has("semestre-01-02-pacote-anual-cde"), false);
+  assert.equal(t.get("semestre-04-05-pacote-anual")?.preco, 249);
+  assert.equal(t.get("semestre-04-05-pacote-anual-cde")?.preco, 249);
+  assert.equal(t.has("semestre-07-08-pacote-anual"), false); // semestres inexistentes
+});
+
+test("Plano Anual: preço de lançamento vale até a data (inclusive, horário de Brasília)", () => {
+  const cat = { ...CATALOGO, anuais: { ...CATALOGO.anuais, lancamentoAte: "2026-10-20" } } as any;
+  const dia20noite = new Date("2026-10-21T02:30:00Z"); // 23:30 em Brasília, dia 20
+  const dia21 = new Date("2026-10-21T03:30:00Z");      // 00:30 em Brasília, dia 21
+  assert.equal(precos.montarTabelaPrecos(cat, dia20noite).get("semestre-01-02-pacote-anual")?.preco, 229);
+  assert.equal(precos.montarTabelaPrecos(cat, dia21).get("semestre-01-02-pacote-anual")?.preco, 249);
+});
+
+test("Plano Anual: indisponível some do checkout", () => {
+  const cat = { ...CATALOGO, anuais: { ...CATALOGO.anuais, disponivel: false } } as any;
+  assert.equal(precos.montarTabelaPrecos(cat).has("semestre-01-02-pacote-anual"), false);
+});
+
+test("checkout do Plano Anual cobra R$ 249 mesmo se o navegador mandar outro valor", async () => {
+  const r = await checkoutPOST(reqCheckout({ email: "a@b.com", nome: "A", plano: "semestre-01-02-pacote-anual", itemNome: "Plano Anual", preco: 1 }));
+  assert.equal(r.status, 200);
+  assert.equal(preferenciaCriada.items[0].unit_price, 249);
 });

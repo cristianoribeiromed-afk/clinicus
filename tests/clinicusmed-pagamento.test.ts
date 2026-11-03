@@ -53,10 +53,13 @@ let catalogoDisponivel = true;
 
 function filtros(url: URL) {
   const f: [string, string][] = [];
+  const em: [string, string[]][] = [];
   url.searchParams.forEach((v, k) => {
     if (v.startsWith("eq.")) f.push([k, decodeURIComponent(v.slice(3))]);
+    // PostgREST: plano=in.("a","b") (aspas opcionais)
+    if (v.startsWith("in.(") && v.endsWith(")")) em.push([k, v.slice(4, -1).split(",").map((x) => x.replace(/^"|"$/g, ""))]);
   });
-  return (l: Linha) => f.every(([k, v]) => String(l[k]) === v);
+  return (l: Linha) => f.every(([k, v]) => String(l[k]) === v) && em.every(([k, vs]) => vs.includes(String(l[k])));
 }
 
 const fetchOriginal = globalThis.fetch;
@@ -94,7 +97,7 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
     if (metodo === "PATCH") {
       const alvo = accessSync.filter(filtros(url));
       alvo.forEach((l) => Object.assign(l, corpo));
-      return json(alvo.map((l) => ({ email: l.email })));
+      return json(alvo.map((l) => ({ email: l.email, plano: l.plano })));
     }
   }
   return fetchOriginal(input, init);
@@ -312,4 +315,69 @@ test("checkout do Plano Anual cobra R$ 249 mesmo se o navegador mandar outro val
   const r = await checkoutPOST(reqCheckout({ email: "a@b.com", nome: "A", plano: "semestre-01-02-pacote-anual", itemNome: "Plano Anual", preco: 1 }));
   assert.equal(r.status, 200);
   assert.equal(preferenciaCriada.items[0].unit_price, 249);
+});
+
+
+// ---------- carrinho (vários planos num pagamento) ----------
+const CARRINHO = ["semestre-01-histologia-i-p2-combo", "semestre-01-histologia-i-combo"]; // P2 + Final de uma matéria
+const META_CARRINHO = { email: "aluno@teste.com", nome: "Aluno", planos: CARRINHO.join(","), preco_esperado: 31.8 };
+
+test("carrinho: cobra a soma dos preços oficiais, um item por plano, mesmo com preço adulterado", async () => {
+  const r = await checkoutPOST(reqCheckout({ email: "a@b.com", nome: "A", plano: CARRINHO[0], itemNome: "Pedido", preco: 1, planos: CARRINHO,
+    titulos: { [CARRINHO[0]]: "Histología I — P2", [CARRINHO[1]]: "Histología I — Final" } }));
+  assert.equal(r.status, 200);
+  assert.deepEqual(preferenciaCriada.items.map((i: any) => [i.title, i.unit_price]), [["Histología I — P2", 15.9], ["Histología I — Final", 15.9]]);
+  assert.equal(preferenciaCriada.metadata.planos, CARRINHO.join(","));
+  assert.equal(preferenciaCriada.metadata.plano, undefined);
+  assert.equal(preferenciaCriada.metadata.preco_esperado, 31.8);
+  assert.ok(preferenciaCriada.external_reference.length <= 256);
+});
+
+test("carrinho: recusa pedido com item inexistente ou com mais de 20 itens", async () => {
+  let r = await checkoutPOST(reqCheckout({ email: "a@b.com", nome: "A", plano: CARRINHO[0], itemNome: "Pedido", planos: [...CARRINHO, "semestre-09-inventado-combo"] }));
+  assert.equal(r.status, 400);
+  r = await checkoutPOST(reqCheckout({ email: "a@b.com", nome: "A", plano: CARRINHO[0], itemNome: "Pedido", planos: Array.from({ length: 21 }, (_, i) => "x" + i) }));
+  assert.equal(r.status, 400);
+  assert.equal(preferenciaCriada, null);
+});
+
+test("carrinho com 1 item só (ou repetido) segue o caminho de sempre", async () => {
+  const r = await checkoutPOST(reqCheckout({ ...META, itemNome: "Premium", planos: [META.plano, META.plano] }));
+  assert.equal(r.status, 200);
+  assert.equal(preferenciaCriada.metadata.plano, META.plano);
+  assert.equal(preferenciaCriada.items.length, 1);
+});
+
+test("webhook do carrinho libera TODOS os itens do pedido", async () => {
+  pagamentoMP = { id: 301, status: "approved", currency_id: "BRL", transaction_amount: 31.8, metadata: META_CARRINHO };
+  const r = await webhookPOST(reqWebhook("301"));
+  assert.equal(r.status, 200);
+  assert.deepEqual(accessSync.map((l) => l.plano).sort(), [...CARRINHO].sort());
+  assert.ok(accessSync.every((l) => l.ativo && l.id_transacao === "301"));
+});
+
+test("webhook do carrinho NÃO libera se pagou menos que a soma", async () => {
+  pagamentoMP = { id: 302, status: "approved", currency_id: "BRL", transaction_amount: 15.9, metadata: META_CARRINHO };
+  const corpo = await (await webhookPOST(reqWebhook("302"))).json();
+  assert.equal(corpo.acessoLiberado, false);
+  assert.equal(accessSync.length, 0);
+});
+
+test("estorno do carrinho revoga todos os itens, e só os dessa transação", async () => {
+  accessSync.push({ email: META.email, plano: "semestre-01-pacote-premium", ativo: true, id_transacao: "999" });
+  pagamentoMP = { id: 303, status: "approved", currency_id: "BRL", transaction_amount: 31.8, metadata: META_CARRINHO };
+  await webhookPOST(reqWebhook("303"));
+  pagamentoMP = { ...pagamentoMP, status: "refunded" };
+  await webhookPOST(reqWebhook("303"));
+  for (const p of CARRINHO) assert.equal(accessSync.find((l) => l.plano === p)!.ativo, false);
+  assert.equal(accessSync.find((l) => l.plano === "semestre-01-pacote-premium")!.ativo, true);
+});
+
+test("reenvio do webhook do carrinho é idempotente", async () => {
+  pagamentoMP = { id: 304, status: "approved", currency_id: "BRL", transaction_amount: 31.8, metadata: META_CARRINHO };
+  await webhookPOST(reqWebhook("304"));
+  const datas = accessSync.map((l) => l.data_liberacao);
+  await webhookPOST(reqWebhook("304"));
+  assert.equal(accessSync.length, 2);
+  assert.deepEqual(accessSync.map((l) => l.data_liberacao), datas);
 });

@@ -51,6 +51,20 @@ interface CheckoutPayload {
   // O navegador ainda envia "preco", mas ele é IGNORADO: o preço cobrado
   // sai sempre do catalogo.json, no servidor (lib/clinicusmed-precos.ts).
   preco?: number;
+  // Carrinho da loja: vários planos num pagamento só. Cada um é cobrado pelo
+  // preço oficial; o total é a soma. (A troca de matérias por pacote é feita
+  // pela loja antes; aqui só existem planos normais, pelo preço normal.)
+  planos?: string[];
+  titulos?: Record<string, string>; // só para o texto do checkout
+}
+
+const MAX_ITENS_CARRINHO = 20;
+
+/** Lista de planos do carrinho, normalizada; null se não veio carrinho. */
+function planosDoCarrinho(body: CheckoutPayload): string[] | null {
+  if (!Array.isArray(body.planos)) return null;
+  const lista = [...new Set(body.planos.filter((p) => typeof p === "string").map((p) => p.trim().toLowerCase()).filter(Boolean))];
+  return lista.length > 1 ? lista : null;
 }
 
 function isValidPayload(body: unknown): body is CheckoutPayload {
@@ -98,18 +112,40 @@ export async function POST(req: NextRequest) {
   const nome = body.nome.trim().slice(0, 120);
   const plano = body.plano.trim();
   const itemNome = body.itemNome.trim().slice(0, 200);
+  const carrinho = planosDoCarrinho(body);
+  if (carrinho && carrinho.length > MAX_ITENS_CARRINHO) {
+    return NextResponse.json(
+      { success: false, message: `O carrinho aceita até ${MAX_ITENS_CARRINHO} itens por pedido.` },
+      { status: 400, headers: cors }
+    );
+  }
 
   // Preço definido pelo SERVIDOR a partir do catálogo publicado.
   let preco: number;
+  let linhas: { plano: string; preco: number }[] = [];
   try {
-    const produto = (await obterTabelaPrecos()).get(plano);
-    if (!produto) {
-      return NextResponse.json(
-        { success: false, message: "Produto não encontrado ou indisponível. Recarregue a página e tente de novo." },
-        { status: 400, headers: cors }
-      );
+    const tabela = await obterTabelaPrecos();
+    if (carrinho) {
+      const faltando = carrinho.filter((p) => !tabela.has(p));
+      if (faltando.length) {
+        console.warn("Carrinho com plano fora do catálogo:", faltando);
+        return NextResponse.json(
+          { success: false, message: "Um dos itens do carrinho não está mais disponível. Recarregue a página e tente de novo." },
+          { status: 400, headers: cors }
+        );
+      }
+      linhas = carrinho.map((p) => ({ plano: p, preco: tabela.get(p)!.preco }));
+      preco = linhas.reduce((s, l) => s + Math.round(l.preco * 100), 0) / 100;
+    } else {
+      const produto = tabela.get(plano);
+      if (!produto) {
+        return NextResponse.json(
+          { success: false, message: "Produto não encontrado ou indisponível. Recarregue a página e tente de novo." },
+          { status: 400, headers: cors }
+        );
+      }
+      preco = produto.preco;
     }
-    preco = produto.preco;
   } catch (e) {
     console.error("Não foi possível ler o catálogo de preços:", e);
     return NextResponse.json(
@@ -118,27 +154,38 @@ export async function POST(req: NextRequest) {
     );
   }
   if (typeof body.preco === "number" && Math.abs(body.preco - preco) > 0.009) {
-    console.warn("Preço enviado pelo navegador diverge do catálogo (ignorado):", { plano, enviado: body.preco, catalogo: preco });
+    console.warn("Preço enviado pelo navegador diverge do catálogo (ignorado):", { plano: carrinho ?? plano, enviado: body.preco, catalogo: preco });
   }
 
   const siteUrl = process.env.CLINICUSMED_SITE_URL || "https://clinicusmed.com.br";
+  const titulos = body.titulos && typeof body.titulos === "object" ? body.titulos : {};
+  const tituloDe = (p: string) => {
+    const t = titulos[p];
+    return (typeof t === "string" && t.trim() ? t.trim() : p).slice(0, 200);
+  };
 
   const preference = {
-    items: [
-      {
-        title: itemNome,
-        quantity: 1,
-        unit_price: preco,
-        currency_id: "BRL",
-      },
-    ],
+    items: carrinho
+      ? linhas.map((l) => ({ title: tituloDe(l.plano), quantity: 1, unit_price: l.preco, currency_id: "BRL" }))
+      : [
+          {
+            title: itemNome,
+            quantity: 1,
+            unit_price: preco,
+            currency_id: "BRL",
+          },
+        ],
     payer: { email, name: nome },
     // metadata volta junto no objeto de pagamento quando o webhook dispara —
     // é assim que a gente sabe QUEM comprou O QUÊ, sem precisar de mais nada.
     // preco_esperado é gravado pelo servidor (o comprador não consegue
     // alterá-lo) e é conferido de novo no webhook.
-    metadata: { email, nome, plano, preco_esperado: preco },
-    external_reference: `${plano}|${email}`, // identificador de reserva, redundante com o metadata
+    // Carrinho: "planos" leva a lista separada por vírgula (e não "plano").
+    metadata: carrinho
+      ? { email, nome, planos: carrinho.join(","), preco_esperado: preco }
+      : { email, nome, plano, preco_esperado: preco },
+    // identificador de reserva, redundante com o metadata (o Mercado Pago aceita até 256 caracteres)
+    external_reference: (carrinho ? `carrinho-${carrinho.length}|${email}` : `${plano}|${email}`).slice(0, 256),
     back_urls: {
       success: `${siteUrl}/?pagamento=sucesso`,
       failure: `${siteUrl}/?pagamento=falha`,

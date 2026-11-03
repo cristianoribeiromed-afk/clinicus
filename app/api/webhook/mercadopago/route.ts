@@ -217,29 +217,33 @@ export async function POST(request: NextRequest) {
       // (identificado pelo metadata email/plano, setado na criacao do
       // checkout em /api/checkout/clinicusmed)
       const meta = payment.metadata || {};
-      if (meta.email && meta.plano) {
+      // Compra de um item: metadata.plano. Carrinho: metadata.planos ("a,b,c").
+      const planos: string[] = meta.planos
+        ? [...new Set(String(meta.planos).split(",").map((p) => p.trim()).filter(Boolean))]
+        : meta.plano ? [String(meta.plano)] : [];
+      if (meta.email && planos.length) {
         const email = String(meta.email).toLowerCase().trim();
-        const plano = String(meta.plano);
         const nome = meta.nome ? String(meta.nome) : null;
         const idTransacao = String(payment.id);
 
         // Estorno, chargeback ou cancelamento: revoga o acesso que ESTA
         // transação liberou (não mexe em acesso liberado por outra compra).
+        // No carrinho, revoga todos os itens do pedido.
         if (["refunded", "charged_back", "cancelled"].includes(payment.status)) {
           const { data: revogados, error: revogaErro } = await supabase
             .from("access_sync")
             .update({ ativo: false })
             .eq("email", email)
-            .eq("plano", plano)
+            .in("plano", planos)
             .eq("id_transacao", idTransacao)
-            .select("email");
+            .select("email, plano");
           if (revogaErro) {
             console.error("Erro ao revogar acesso ClinicusMed:", revogaErro);
             return NextResponse.json({ error: "Erro ao revogar acesso." }, { status: 500 });
           }
-          if (revogados && revogados.length > 0) {
-            console.warn("Acesso ClinicusMed revogado:", { plano, idTransacao, status: payment.status });
-            await sincronizarPlanilhaAcessos({ email, plano, nome, origem: `mercadopago-${payment.status}`, idTransacao, ativo: false });
+          for (const r of (revogados as any[]) || []) {
+            console.warn("Acesso ClinicusMed revogado:", { plano: r.plano, idTransacao, status: payment.status });
+            await sincronizarPlanilhaAcessos({ email, plano: r.plano, nome, origem: `mercadopago-${payment.status}`, idTransacao, ativo: false });
           }
           return NextResponse.json({ received: true, origem: "clinicusmed", acessoRevogado: (revogados?.length ?? 0) > 0 });
         }
@@ -248,13 +252,18 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ received: true, origem: "clinicusmed", status: payment.status });
         }
 
-        // Confere o VALOR pago contra o preço do produto. Aceita o menor
-        // entre o preço atual do catálogo e o preço gravado pelo servidor
-        // no checkout (metadata.preco_esperado) — assim um reajuste de
-        // preço não prejudica quem já estava pagando.
+        // Confere o VALOR pago contra o preço do produto (no carrinho, a soma
+        // dos preços de todos os itens). Aceita o menor entre o preço atual do
+        // catálogo e o preço gravado pelo servidor no checkout
+        // (metadata.preco_esperado) — assim um reajuste de preço não
+        // prejudica quem já estava pagando.
         let precoCatalogo: number | null = null;
         try {
-          precoCatalogo = (await obterTabelaPrecos()).get(plano)?.preco ?? null;
+          const tabela = await obterTabelaPrecos();
+          const precos = planos.map((p) => tabela.get(p)?.preco);
+          precoCatalogo = precos.every((v): v is number => typeof v === "number")
+            ? precos.reduce((s, v) => s + Math.round(v * 100), 0) / 100
+            : null;
         } catch (e) {
           console.error("Catálogo indisponível ao validar pagamento:", e);
         }
@@ -263,13 +272,13 @@ export async function POST(request: NextRequest) {
         if (candidatos.length === 0) {
           // Sem como saber o preço agora: devolve erro para o Mercado Pago
           // reenviar a notificação mais tarde, em vez de liberar às cegas.
-          console.error("Sem preço de referência para validar pagamento ClinicusMed:", { plano, idTransacao });
+          console.error("Sem preço de referência para validar pagamento ClinicusMed:", { planos, idTransacao });
           return NextResponse.json({ error: "Preço de referência indisponível." }, { status: 503 });
         }
         const precoMinimo = Math.min(...candidatos);
         if (payment.currency_id !== "BRL" || !valorPagoCobre(payment.transaction_amount, precoMinimo)) {
           console.error("PAGAMENTO COM VALOR INCOMPATÍVEL — acesso NÃO liberado:", {
-            plano,
+            planos,
             idTransacao,
             pago: payment.transaction_amount,
             moeda: payment.currency_id,
@@ -279,33 +288,32 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ received: true, origem: "clinicusmed", acessoLiberado: false, motivo: "valor_incompativel" });
         }
 
-        const { data: existente } = await supabase
+        const { data: existentes } = await supabase
           .from("access_sync")
-          .select("id_transacao, data_liberacao")
+          .select("plano, id_transacao, data_liberacao")
           .eq("email", email)
-          .eq("plano", plano)
-          .maybeSingle();
-        const jaProcessado = (existente as any)?.id_transacao === idTransacao;
-
+          .in("plano", planos);
+        const porPlano = new Map(((existentes as any[]) || []).map((e) => [e.plano, e]));
+        const hoje = new Date().toISOString().split("T")[0];
         // Idempotência: se já processamos essa transação antes (reenvio
         // de webhook), preserva a data_liberacao ORIGINAL em vez de
         // sobrescrever com a data de hoje a cada retry.
-        const dataLiberacao = jaProcessado && (existente as any)?.data_liberacao
-          ? (existente as any).data_liberacao
-          : new Date().toISOString().split("T")[0];
-
-        const { error: upsertError } = await supabase.from("access_sync").upsert(
-          {
+        const linhas = planos.map((plano) => {
+          const ex = porPlano.get(plano);
+          const jaDestaTransacao = ex?.id_transacao === idTransacao;
+          return {
             email,
             nome,
             plano,
             ativo: true,
-            data_liberacao: dataLiberacao,
+            data_liberacao: jaDestaTransacao && ex?.data_liberacao ? ex.data_liberacao : hoje,
             origem: "mercadopago",
             id_transacao: idTransacao,
-          },
-          { onConflict: "email,plano" }
-        );
+          };
+        });
+        const jaProcessado = planos.every((p) => porPlano.get(p)?.id_transacao === idTransacao);
+
+        const { error: upsertError } = await supabase.from("access_sync").upsert(linhas, { onConflict: "email,plano" });
 
         if (upsertError) {
           console.error("Erro ao gravar acesso ClinicusMed:", upsertError);
@@ -313,20 +321,23 @@ export async function POST(request: NextRequest) {
         }
 
         if (!jaProcessado) {
-          await enviarEmailConfirmacaoClinicusMed(email, nome || "aluno(a)", plano);
+          const rotulo = planos.length === 1 ? planos[0] : `${planos.length} itens do seu pedido`;
+          await enviarEmailConfirmacaoClinicusMed(email, nome || "aluno(a)", rotulo);
         }
 
         // Espelha a liberação na planilha do Google Sheets — não bloqueia
         // nem falha o webhook se der problema (ver comentário na função).
-        await sincronizarPlanilhaAcessos({
-          email,
-          plano,
-          nome,
-          origem: "mercadopago",
-          idTransacao,
-        });
+        for (const plano of planos) {
+          await sincronizarPlanilhaAcessos({
+            email,
+            plano,
+            nome,
+            origem: "mercadopago",
+            idTransacao,
+          });
+        }
 
-        return NextResponse.json({ received: true, origem: "clinicusmed", acessoLiberado: true });
+        return NextResponse.json({ received: true, origem: "clinicusmed", acessoLiberado: true, itens: planos.length });
       }
 
       return NextResponse.json(

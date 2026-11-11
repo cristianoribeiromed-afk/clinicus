@@ -13,7 +13,36 @@
 //   CLINICUSMED_SITE_URL       (ex: https://clinicusmed.com.br)
 
 import { NextRequest, NextResponse } from "next/server";
-import { obterTabelaPrecos } from "@/lib/clinicusmed-precos";
+import { obterTabelaPrecos, planosQueDaoDescontoFinal, type ProdutoPreco } from "@/lib/clinicusmed-precos";
+import { supabase } from "@/lib/supabase-server";
+
+/**
+ * Preço de cada plano para ESTE e-mail. Hoje a única variação é o Pacote
+ * Finais: quem já tem o Pacote P2 (ou P1 + P2) ativo do mesmo semestre paga
+ * precoComP2. Se a consulta falhar, cobra o preço normal (nunca menos).
+ */
+async function precosParaEmail(email: string, planos: string[], tabela: Map<string, ProdutoPreco>): Promise<Map<string, number>> {
+  const precos = new Map(planos.map((p) => [p, tabela.get(p)!.preco]));
+  const alvos = planos.filter((p) => typeof tabela.get(p)?.precoComP2 === "number" && planosQueDaoDescontoFinal(p));
+  if (!alvos.length) return precos;
+  const exigidos = [...new Set(alvos.flatMap((p) => planosQueDaoDescontoFinal(p)!))];
+  try {
+    const { data, error } = await supabase
+      .from("access_sync")
+      .select("plano")
+      .eq("email", email)
+      .eq("ativo", true)
+      .in("plano", exigidos);
+    if (error) throw error;
+    const tem = new Set(((data as { plano: string }[]) || []).map((r) => r.plano));
+    for (const p of alvos) {
+      if (planosQueDaoDescontoFinal(p)!.some((q) => tem.has(q))) precos.set(p, tabela.get(p)!.precoComP2!);
+    }
+  } catch (e) {
+    console.error("Não foi possível conferir o Pacote P2 para o desconto do Pacote Finais (cobrando preço normal):", e);
+  }
+  return precos;
+}
 
 // Origens autorizadas a chamar essa rota a partir do navegador do aluno.
 // O site estático do ClinicusMed roda em domínio diferente da API (Vercel),
@@ -134,7 +163,8 @@ export async function POST(req: NextRequest) {
           { status: 400, headers: cors }
         );
       }
-      linhas = carrinho.map((p) => ({ plano: p, preco: tabela.get(p)!.preco }));
+      const precos = await precosParaEmail(email, carrinho, tabela);
+      linhas = carrinho.map((p) => ({ plano: p, preco: precos.get(p)! }));
       preco = linhas.reduce((s, l) => s + Math.round(l.preco * 100), 0) / 100;
     } else {
       const produto = tabela.get(plano);
@@ -144,7 +174,7 @@ export async function POST(req: NextRequest) {
           { status: 400, headers: cors }
         );
       }
-      preco = produto.preco;
+      preco = (await precosParaEmail(email, [plano], tabela)).get(plano)!;
     }
   } catch (e) {
     console.error("Não foi possível ler o catálogo de preços:", e);

@@ -38,7 +38,7 @@ type Materia = {
 type Semestre = {
   slug: string;
   materias?: Materia[] | null;
-  pacotes?: Record<string, { disponivel?: boolean; preco?: number | null } | null> | null;
+  pacotes?: Record<string, { disponivel?: boolean; preco?: number | null; precoComP2?: number | null } | null> | null;
 };
 
 type Anuais = {
@@ -51,7 +51,27 @@ type Anuais = {
 
 export type Catalogo = { semestres: Semestre[]; anuais?: Anuais };
 
-export type ProdutoPreco = { plano: string; preco: number; tipo: "etapa" | "completo" | "pacote" | "anual" };
+export type ProdutoPreco = {
+  plano: string;
+  preco: number;
+  tipo: "etapa" | "completo" | "pacote" | "anual";
+  // Só no Pacote Finais: preço para quem já comprou o Pacote P2 (ou P1 + P2)
+  // do mesmo semestre. Quem decide se o desconto vale é o servidor, olhando
+  // as compras ativas do e-mail (ver planosQueDaoDescontoFinal).
+  precoComP2?: number;
+};
+
+/**
+ * Pacote Finais do semestre: devolve os pacotes que dão direito ao preço com
+ * desconto (P2 ou P1 + P2 do mesmo semestre, com ou sem o sufixo -cde, porque
+ * a loja grava as duas formas). Para qualquer outro plano, null.
+ */
+export function planosQueDaoDescontoFinal(plano: string): string[] | null {
+  const m = /^(semestre-\d+)-pacote-final(-cde)?$/.exec(plano);
+  if (!m) return null;
+  const s = m[1];
+  return ["p2", "p1p2"].flatMap((t) => [`${s}-pacote-${t}`, `${s}-pacote-${t}-cde`]);
+}
 
 /** Data de hoje (AAAA-MM-DD) no horário de Brasília. */
 function hojeBrasilia(agora: Date): string {
@@ -111,8 +131,9 @@ export function montarTabelaPrecos(catalogo: Catalogo, agora = new Date()): Map<
     for (const [tipo, p] of Object.entries(sem.pacotes || {})) {
       if (!p || !p.disponivel || !precoValido(p.preco)) continue;
       // A loja gera a mesma chave com e sem o sufixo -cde, pelo mesmo preço.
+      const comP2 = tipo === "final" && precoValido(p.precoComP2) && p.precoComP2 < p.preco ? p.precoComP2 : undefined;
       for (const plano of [`${sem.slug}-pacote-${tipo}`, `${sem.slug}-pacote-${tipo}-cde`]) {
-        tabela.set(plano, { plano, preco: p.preco, tipo: "pacote" });
+        tabela.set(plano, { plano, preco: p.preco, tipo: "pacote", ...(comP2 !== undefined ? { precoComP2: comP2 } : {}) });
       }
     }
   }

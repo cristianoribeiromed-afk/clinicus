@@ -35,7 +35,11 @@ const CATALOGO = {
         },
         { nome: "Em Breve", etapas: { P1: { disponivel: false, resumo: { disponivel: false, preco: 9 } }, P2: null } },
       ],
-      pacotes: { premium: { disponivel: true, preco: 149 }, p2: { disponivel: false, preco: 44.9 } },
+      pacotes: {
+        premium: { disponivel: true, preco: 149 },
+        p2: { disponivel: false, preco: 44.9 },
+        final: { disponivel: true, preco: 44.9, precoComP2: 34.9 },
+      },
     },
     { slug: "semestre-02", materias: [{ nome: "Anatomía II", etapas: {} }], pacotes: {} },
     { slug: "semestre-04", materias: [{ nome: "Fisiología II CDE", etapas: {} }], pacotes: {} },
@@ -380,4 +384,48 @@ test("reenvio do webhook do carrinho é idempotente", async () => {
   await webhookPOST(reqWebhook("304"));
   assert.equal(accessSync.length, 2);
   assert.deepEqual(accessSync.map((l) => l.data_liberacao), datas);
+});
+
+// ---------- Pacote Finais: desconto para quem já tem o Pacote P2 ----------
+const FINAIS = { email: "aluno@teste.com", nome: "Aluno", plano: "semestre-01-pacote-final", itemNome: "Pacote Finais" };
+
+test("Pacote Finais: sem Pacote P2 cobra o preço normal", async () => {
+  const r = await checkoutPOST(reqCheckout({ ...FINAIS, preco: 34.9 }));
+  assert.equal(r.status, 200);
+  assert.equal(preferenciaCriada.items[0].unit_price, 44.9);
+  assert.equal(preferenciaCriada.metadata.preco_esperado, 44.9);
+});
+
+test("Pacote Finais: com Pacote P2 ativo cobra o preço com desconto e o webhook libera", async () => {
+  accessSync = [{ email: "aluno@teste.com", plano: "semestre-01-pacote-p2", ativo: true }];
+  const r = await checkoutPOST(reqCheckout(FINAIS));
+  assert.equal(r.status, 200);
+  assert.equal(preferenciaCriada.items[0].unit_price, 34.9);
+  assert.equal(preferenciaCriada.metadata.preco_esperado, 34.9);
+  pagamentoMP = { id: 301, status: "approved", currency_id: "BRL", transaction_amount: 34.9, metadata: preferenciaCriada.metadata };
+  const w = await webhookPOST(reqWebhook("301"));
+  assert.equal((await w.json()).acessoLiberado, true);
+  assert.ok(accessSync.some((l) => l.plano === "semestre-01-pacote-final" && l.ativo === true));
+});
+
+test("Pacote Finais: P1 + P2 também dá desconto; P2 de outro semestre ou inativo não dá", async () => {
+  accessSync = [{ email: "aluno@teste.com", plano: "semestre-01-pacote-p1p2-cde", ativo: true }];
+  await checkoutPOST(reqCheckout({ ...FINAIS, plano: "semestre-01-pacote-final-cde" }));
+  assert.equal(preferenciaCriada.items[0].unit_price, 34.9);
+  for (const linha of [
+    { email: "aluno@teste.com", plano: "semestre-02-pacote-p2", ativo: true },
+    { email: "aluno@teste.com", plano: "semestre-01-pacote-p2", ativo: false },
+    { email: "outro@teste.com", plano: "semestre-01-pacote-p2", ativo: true },
+  ]) {
+    accessSync = [linha];
+    await checkoutPOST(reqCheckout(FINAIS));
+    assert.equal(preferenciaCriada.items[0].unit_price, 44.9, JSON.stringify(linha));
+  }
+});
+
+test("Pacote Finais: webhook não aceita valor com desconto sem o checkout ter dado o desconto", async () => {
+  pagamentoMP = { id: 302, status: "approved", currency_id: "BRL", transaction_amount: 34.9,
+    metadata: { email: "aluno@teste.com", nome: "Aluno", plano: "semestre-01-pacote-final", preco_esperado: 44.9 } };
+  const w = await webhookPOST(reqWebhook("302"));
+  assert.equal((await w.json()).acessoLiberado, false);
 });
